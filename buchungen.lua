@@ -8,17 +8,6 @@
 -- Das Skript liest eine zweite Lua-Datei ein, in der sich die eigentliche Konfiguration
 -- befindet. Diese muss an die eigenen Bedürfnisse und Verhältnisse angepasst werden.
 --
--- Die Konfiguration sorgt im wesentlichen dafür, dass den verwendeten Bankkonten in
--- MoneyMoney Finanzkonten und den Umsätzen selbst (z.B. auf Basis der in MoneyMoney zugewiesenen
--- Kategorien) entsprechende Gegenkonten zugewiesen werden. Können für einen Umsatz
--- ein Finanzkonto und ein Gegenkonto ermittelt werden, wird der Umsatz exportiert.
---
--- TODO:
---
--- * Abbuchungen (negative Beträge) sollten bereits im Export zum Vertauschen
---   von Finanzkonto und Gegenkonto führen und den Betrag das Minuszeichen entziehen
-
---
 
 
 -- CSV Dateieinstellungen
@@ -32,32 +21,10 @@ local reverseOrder = false
 -- Exportformat bei MoneyMoney anmelden
 
 Exporter{version       = 1.00,
-         format        = MM.localizeText("GDPdU Buchungssätze"),
+         format        = MM.localizeText("Buchungssätze"),
          fileExtension = "csv",
          reverseOrder  = reverseOrder,
          description   = MM.localizeText("Export von MoneyMoney Umsätzen zu direkt importierbaren Steuer-Buchungssätzen.")}
-
-
--- Zugriffsklasse für Kostenstelle einrichten.
--- Zugriff auf nicht definierte Kostenstellen führen zum Abbruch des Exports.
-
-
-KS = setmetatable ({},
-  {
-    __index = function(_, key)
-      local ks = Kostenstellen[key]
-      if ks then
-        return ks
-      end
-
-      error("Kostenstelle " .. key .. " nicht definiert.")
-    end
-  }
-)
-
--- Konfiguration einlesen
-
-require("conf/buchungen")
 
 
 -- Definition der Reihenfolge und Titel der zu exportierenden Buchungsfelder
@@ -102,8 +69,6 @@ local function concatenate (...)
 end
 
 
-
-
 --
 -- WriteHeader: Erste Zeile der Exportdatei schreiben
 --
@@ -120,9 +85,84 @@ function WriteHeader (account, startDate, endDate, transactionCount)
     line = line .. csvField(Eintrag[2])
   end
   assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
-
+  print ("--------------- NEW EXPORT ----------------")
+  
 end
 
+
+
+function DruckeUmsatz(Grund, Umsatz)
+  print (string.format( "%s: %s / %s %s / %s / %s / %s\n",
+    Grund, Umsatz.Datum, Umsatz.Betrag, Umsatz.Waehrung,
+    Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz) )
+end
+
+
+-- Extrahiere Metadaten aus dem Kategorie-Titel
+--
+-- Übergeben wird ein KategoriePfad, der die Kategorie-Hierarchie
+-- in MoneyMoney wiedergibt. Jede Kategorie in diesem Pfad kann
+-- ein Gegenkonto, einen Steuersatz oder eine Kostenstelle spezifizieren.
+--
+-- Wird ein Gegenkonto oder Steuersatz mehrfach spezifiziert, überschreibt
+-- jeweils das jeweils rechte Feld den Wert seines Vorgängers. Kostenstellen
+-- ergänzen sich, es dürfen aber nur maximal zwei unterschiedliche Kostenstellen
+-- angegeben werden.
+
+function KategorieMetadaten (KategoriePfad)
+  local KategorieNeuerPfad
+  local Gegenkonto, Steuersatz, KS1, KS2
+  local AnzahlKostenstellen = 1
+  local Kostenstellen = {}
+
+  for Kategorie in string.gmatch(KategoriePfad, "([^\\]+)") do
+
+    -- Ist dem Titel eine Konfiguration angehängt worden?
+    local i, _, Metadaten = string.find ( Kategorie, "([%[{#].*)$")
+
+    -- Dann Metadaten extrahieren
+    if Metadaten then
+      -- Metadaten aus dem Kategorie-Titel entfernen
+      Kategorie = string.sub (Kategorie, 1, i - 1)
+
+      -- Konto in eckigen Klammern ("[6851]")
+      _, _, Konto = string.find (Metadaten, "%[(%d+)%]")
+      if Konto then
+        Gegenkonto = Konto
+      end
+
+      -- Steuersatz in geschweiften Klammern ("{VSt7}")
+      _, _, Text = string.find (Metadaten, "{(.+)}")
+      if Text then
+        Steuersatz = Text
+      end
+
+      -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
+      for Nummer in string.gmatch(Metadaten, "#(%d+)%s*") do
+        if AnzahlKostenstellen == 3 then
+          error("Zu viele Kostenstellen in der Kategorie angegeben")
+        end
+        Kostenstellen[AnzahlKostenstellen] = Nummer
+        AnzahlKostenstellen = AnzahlKostenstellen + 1
+      end
+    end
+
+    -- Leading/Trailing Whitespace aus dem verbliebenen Kategorie-Titel entfernen
+    _, _, Kategorie = string.find (Kategorie, "%s*(.-)%s*$")
+
+
+    -- Neuen Kategoriepfad aufbauen
+    if KategorieNeuerPfad then
+      KategorieNeuerPfad = KategorieNeuerPfad .. " - " .. Kategorie
+    else
+      KategorieNeuerPfad = Kategorie
+    end
+
+  end
+    
+  -- Alle extrahierten Werte zurückliefern
+  return KategorieNeuerPfad, Gegenkonto, Steuersatz, Kostenstellen[1], Kostenstellen[2]
+end
 
 
 --
@@ -133,16 +173,20 @@ end
 function WriteTransactions (account, transactions)
   for _,transaction in ipairs(transactions) do
 
-    -- Trage Umsatzdaten aus der Transaktion in der später zu expotierenden Form zusammen
+    -- Trage Umsatzdaten aus der Transaktion in der später zu exportierenden Form zusammen
+
+    local Exportieren = true
+
+    -- Zu übertragende Umsatzinformationen in eigener Struktur zwischenspeichern
+    -- und einfache Feldinhalte aus Transaktion übernehmen
 
     local Umsatz = {
       Typ = transaction.bookingText,
       Name = transaction.name or "",
       Kontonummer = transaction.accountNumber or "",
       Bankcode = transaction.bankcode or "", 
-      Kategorie = string.gsub(transaction.category, [[\]], " - "),
       Datum = MM.localizeDate(transaction.bookingDate),
-      Betrag = MM.localizeNumber("0.00", transaction.amount),
+      Betrag = transaction.amount,
       Notiz = transaction.comment or "",
       Verwendungszweck = transaction.purpose or "",
       Waehrung = transaction.currency or ""
@@ -152,103 +196,101 @@ function WriteTransactions (account, transactions)
     -- Daten für den zu schreibenden Buchungsdatensatz
     local Buchung = {
       Umsatzart = Umsatz.Typ,
-      Exportieren = true,
       Datum = Umsatz.Datum,
       Text = Umsatz.Name .. ": " .. Umsatz.Verwendungszweck .. ((Umsatz.Notiz ~= "") and ( " (" .. Umsatz.Notiz .. ")") or ""),
       Finanzkonto = nil,
       Gegenkonto = nil,
-      Betrag = Umsatz.Betrag,
+      Betrag = nil,
       Steuersatz = nil,
       Kostenstelle1 = nil,
       Kostenstelle2 = nil,
       BelegNr = "",
       Referenz = "",
       Waehrung = Umsatz.Waehrung,
-      Bemerkung = concatenate ("(", Umsatz.Kontonummer, ") [", Umsatz.Kategorie, "] {", Umsatz.Typ, "}" )
+      Bemerkung = ""
     }
 
 
-    -- Finanzkonto für verwendetes Bankkonto ermitteln
+    -- Einlesen der Konto-spezifischen Konfiguration aus dem Kommentarfeld
 
-    if ( account.comment == "" ) then
-      -- Zuweisung des Finanzkontos aus der Konfiguration auf Basis des Kontonamens
-      Umsatz.Finanzkonto = Konfiguration.Bankkonten[account.name]
-    else
-      -- Zuweisung des Finanzkontos aus Notizfeld des MoneyMoney Kontos
-      Umsatz.Finanzkonto = account.comment
+
+    local Bankkonto = {}
+
+    for Kennzeichen, Wert in string.gmatch(account.comment, "(%g+)=(%g+)") do
+      Bankkonto[Kennzeichen] = Wert
     end
 
-    if ( Umsatz.Finanzkonto == "" ) then
+    -- Finanzkonto für verwendetes Bankkonto ermitteln
+
+    if ( Bankkonto.Finanzkonto == "" ) then
       error ( "Kein Finanzkonto für " .. account.name .. " gesetzt" )
     end
 
+    Buchung.Finanzkonto = Bankkonto.Finanzkonto
 
 
-    -- Buchungsfelder auf Basis der Zuordnung automatisch setzen
-
-    for Index, Eintrag in pairs(Konfiguration.Zuordnung) do
-      local ErsterEintrag = true
-      local Treffer = false
-
-      -- Alle Kriterien im müssen erfüllt sein, damit Buchungsfelder gesetzt werden können
-
-      for Feld, Wert in pairs(Eintrag[1]) do
-        if ErsterEintrag then
-          ErsterEintrag = false
-          Treffer = (Umsatz[Feld] == Wert)
-        else
-          Treffer = (Treffer and (Umsatz[Feld] == Wert) )
-        end
-      end
 
 
-      -- Wenn alle Umsatz-Kriterien stimmen, setze alle eingestellten Buchungsfelder
 
-      if (Treffer) then
-        for Feld, Wert in pairs(Eintrag[2]) do
-          Buchung[Feld] = Wert
-        end
-        break -- keine weiteren Vergleiche durchführen
-      end
+    -- Extrahiere Buchungsinformationen aus dem Kategorie-Text
+
+    Umsatz.Kategorie, Buchung.Gegenkonto, Buchung.Steuersatz,
+    Buchung.Kostenstelle1, Buchung.Kostenstelle2 = KategorieMetadaten (transaction.category)
+
+    Buchung.Bemerkung = concatenate ("(", Umsatz.Kontonummer, ") [", Umsatz.Kategorie, "] {", Umsatz.Typ, "}" )
+
+    -- Buchungen mit Betrag 0,00 nicht exportieren
+
+    if ( transaction.amount == 0) then
+      Exportieren = false
     end
 
+    -- Buchungen mit Gegenkonto 0000 nicht exportieren
 
-    -- Suche nach Tags in den Umsatznotizen und setze die entsprechenden Buchungsfelder
-
-    for tag in string.gmatch(transaction.comment, "#%w+") do
-      local Match = Konfiguration.Tags[tag]
-      if (Match) then
-        for Feld, Wert in pairs(Match) do
-          Buchung[Feld] = Wert
-        end
-      end
+    if ( tonumber(Buchung.Gegenkonto) == 0) then
+      Exportieren = false
     end
+
+    -- Wenn für das Bankkonto eine Währung spezifiziert ist muss der Umsatz in dieser Währung vorliegen
+
+    if Bankkonto.Waehrung and (Bankkonto.Waehrung ~= Umsatz.Waehrung) then
+      Exportieren = false
+    end
+
 
 
     -- Export der Buchung vorbereiten
 
-    Buchung.Finanzkonto = Umsatz.Finanzkonto
-
-    if (Buchung.Finanzkonto and Buchung.Gegenkonto and Buchung.Exportieren) then
-
-      local line = ""
-      for Position, Eintrag in ipairs(Exportdatei) do
-        if Position ~= 1 then
-          line = line .. separator
-        end
-        line = line .. csvField(Buchung[Eintrag[1]])
-      end
-      assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
-
-
+    if (transaction.amount > 0) then
+      Buchung.Betrag = MM.localizeNumber("0.00", transaction.amount)
     else
-      if (not Buchung.Exportieren) then
-        print ("Unvollständig: ", Umsatz.Datum, " ", Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz)
+      Buchung.Betrag = MM.localizeNumber("0.00", - transaction.amount)
+      Buchung.Finanzkonto, Buchung.Gegenkonto = Buchung.Gegenkonto, Buchung.Finanzkonto
+    end
+    
+
+    -- Buchung exportieren
+
+    if Exportieren then
+      if Buchung.Finanzkonto and Buchung.Gegenkonto then
+
+        local line = ""
+        for Position, Eintrag in ipairs(Exportdatei) do
+          if Position ~= 1 then
+            line = line .. separator
+          end
+          line = line .. csvField(Buchung[Eintrag[1]])
+        end
+        assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
+      else
+        DruckeUmsatz ("UNVOLLSTÄNDIG", Umsatz)
+        error("Abbruch des Exports, da Kontenzuordnung unvollständig ist.")
       end
+    else
+        DruckeUmsatz ("ÜBERSPRUNGEN", Umsatz)
     end
   end
 end
-
 
 
 function WriteTail (account)
