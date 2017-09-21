@@ -1,4 +1,4 @@
-# moneymoney
+# MoneyMonkey
 
 Diese "MoneyMoney-Extension" erlaubt es, die Umsätze auf einem oder mehreren -in "MoneyMoney" geführten- Konten direkt in eine Buchhaltungssoftware als vollständige Buchungssätze zu importieren.
 
