@@ -85,10 +85,18 @@ function WriteHeader (account, startDate, endDate, transactionCount)
     line = line .. csvField(Eintrag[2])
   end
   assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
-  print ("--------------- NEW EXPORT ----------------")
+  print ("--------------- BEGIN EXPORT ----------------")
   
 end
 
+
+--
+-- WriteHeader: Export abschließen
+--
+
+function WriteTail (account)
+  print ("---------------  END EXPORT  ----------------")
+end
 
 
 function DruckeUmsatz(Grund, Umsatz)
@@ -211,10 +219,14 @@ function WriteTransactions (account, transactions)
     }
 
 
-    -- Einlesen der Konto-spezifischen Konfiguration aus dem Kommentarfeld
+    -- Einlesen der Konto-spezifischen Konfiguration aus den Konto-Attributen bzw. dem Kommentarfeld
 
 
     local Bankkonto = {}
+
+    for Kennzeichen, Wert in pairs(account.attributes) do
+      Bankkonto[Kennzeichen] = Wert
+    end
 
     for Kennzeichen, Wert in string.gmatch(account.comment, "(%g+)=(%g+)") do
       Bankkonto[Kennzeichen] = Wert
@@ -284,6 +296,7 @@ function WriteTransactions (account, transactions)
         assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
       else
         DruckeUmsatz ("UNVOLLSTÄNDIG", Umsatz)
+        print (string.format( "Finanzkonto: %s Gegenkonto: %s\n", Buchung.Finanzkonto, Buchung.Gegenkonto ) )
         error("Abbruch des Exports, da Kontenzuordnung unvollständig ist.")
       end
     else
