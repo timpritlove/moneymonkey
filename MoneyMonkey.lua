@@ -14,7 +14,6 @@
 
 local encoding     = "UTF-8"
 local utf_bom      = false
-local separator    = MM.localizeNumber("0.0", 0.0) == "0,0" and ";" or ","
 local linebreak    = "\n"
 local reverseOrder = false
 
@@ -49,16 +48,15 @@ Exportdatei = {
 -- Hilfsfunktionen zur String-Behandlung
 --
 
+local DELIM = "," -- Delimiter
+
 local function csvField (str)
-  -- Helper function for quoting separator character and escaping double quotes.
-  if str == nil then
+  if str == nil or str == "" then
     return ""
-  elseif string.find(str, '[' .. separator .. '"]') then
-    return '"' .. string.gsub(str, '"', '""') .. '"'
-  else
-    return str
   end
+  return '"' .. string.gsub(str, '"', '""') .. '"'
 end
+
 
 local function concatenate (...)
   local catstring = ""
@@ -80,12 +78,12 @@ function WriteHeader (account, startDate, endDate, transactionCount)
   local line = ""
   for Position, Eintrag in ipairs(Exportdatei) do
     if Position ~= 1 then
-      line = line .. separator
+      line = line .. DELIM
     end
     line = line .. csvField(Eintrag[2])
   end
   assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
-  print ("--------------- BEGIN EXPORT ----------------")
+  print ("--------------- START EXPORT ----------------")
   
 end
 
@@ -289,7 +287,7 @@ function WriteTransactions (account, transactions)
         local line = ""
         for Position, Eintrag in ipairs(Exportdatei) do
           if Position ~= 1 then
-            line = line .. separator
+            line = line .. DELIM
           end
           line = line .. csvField(Buchung[Eintrag[1]])
         end
