@@ -213,7 +213,7 @@ function WriteTransactions (account, transactions)
       Kostenstelle1 = nil,
       Kostenstelle2 = nil,
       BelegNr = "",
-      Referenz = "",
+      Referenz = string.gsub(io.filename, ".*/", ""),
       Waehrung = Umsatz.Waehrung,
       Bemerkung = ""
     }
