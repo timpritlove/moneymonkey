@@ -16,7 +16,7 @@ Mit **MoneyMonkey** ist es möglich, eine Online-Banking-gestützte Buchhaltung 
 
 Starte _MoneyMoney_ und wähle aus dem Menü `Hilfe` den Eintrag `Zeige Datenbank im Finder`. Im Finder öffnet sich dann der _MoneyMoney_-Ordner, der die Datenbank, die Kontoauszüge und die Erweiterungen anzeigen.
 
-Kopiere die Datei `MoneyMonkey.lua` in den Ordner "Extensions". Das war's.
+Kopiere die Datei `MoneyMonkey.lua` in den Ordner `Extensions`. Das war's.
 
 ## Konfiguration
 
