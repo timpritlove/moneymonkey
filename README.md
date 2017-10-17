@@ -36,6 +36,11 @@ Hinweis: Benutzerdefinierte Felder stehen in _MoneyMoney_ seit Version 2.3.0 ber
 
 Das Finanzkonto wird in den exportierten Buchungen automatisch als *Soll-Konto* (bei Einnahmen) bzw. als *Haben-Konto* (bei Ausgaben) eingetragen.
 
+#### Währung spezifizieren
+
+Zusätzlich zum Finanzkonto kann für das Bankkonto auch noch die Währung gesetzt werden. Dazu muss entsprechend das Attribut `Waehrung` gesetzt werden (z.B. auf _EUR_).
+
+Wenn **MoneyMonkey** die Währung des Kontos kennt, so werden Buchungen in einer anderen Währung automatisch übersprungen. Das ist z.B. bei PayPal-Konten hilfreich, da _MoneyMoney_ diese Buchungen selbst nicht trennt und gemeinsam exportiert. Würden diese Buchungen übernommen, würde der Saldo nicht stimmen.
 
 ### Gegenkonto konfigurieren
 
@@ -45,6 +50,11 @@ Das Gegenkonto wird direkt an den eigentlichen Namen der Kategorie am Ende des T
 
 Um den Namen einer Kategorie zu ändern, wählt man die Kategorie in der Seitenleiste aus und wählt aus dem Kontextmenü den Eintrag `Einstellungen …` (oder CMD-I).
 
+#### Umsätze überspringen
+
+Wird für eine Kategorie das Gegenkonto `[0000]` ausgewählt, werden die dieser Kategorie zugewiesenen Umsätze automatisch **NICHT** exportiert.
+
+Diese Funktion sollte nur in Ausnahmefällen gewählt werden (z.B. für Buchungen in Fremdwährungen, wofür sich aber eher die Einstellung einer Währung für das Bankkonto (siehe oben) empfiehlt).
 
 ### Steuersatz konfigurieren
 
@@ -114,3 +124,26 @@ Das Skript beendet den Export vorzeitig wenn einer der folgenden Fehler detektie
 * Es wurden einer Kategorie mehr als zwei Kostenstellen zugeordnet
 
 Der Fehler wird entsprechend in einem Dialog angezeigt. In jedem dieser Fälle wird keine Datei erzeugt.
+
+## Import in MonKey Office
+
+Wenn die Exportdatei geschrieben wurde kann sie anschließend über die Funktion "Import & Export -> Textdatei importieren" importiert werden.
+
+###Import konfigurieren
+
+Um die Datei imporieren zu können muss zunächst eine Einstellung dafür angelegt werden. Diese muss mit den folgenden Einstellungen angelegt werden:
+
+* Bereich: **Buchungen**
+* Trennzeichen für Felder: **Komma**
+* Trennzeichen für Datensätze: **LF**
+* Text in Anführungszeichen: **Doppelt "**
+* Zeichensatz für: **UTF-8**
+* Importieren ab Zeile: *2*
+* Steuerautomatik: _abhängig von der Buchhaltungssystematik_
+* Einzeilig: **AUS**
+
+Über den Button _Felder zuordnen_ können die Spalten in der Exportdatei den Feldern der Buchhaltung zugeordnet werden. Die Spaltentitel der Exportdatei entsprechen dabei 1:1 den Bezeichnungen in MonKey Office und sollten daher leicht zu finden sein.
+
+## Import starten
+
+Wenn die Einstellungen für den Import vorgenommen wurden kann die Exportdatei importiert werden. Dabei sollte ggf. noch mal überprüft werden, ob die richtigen Spalten gewählt wurden und ob den Buchungen die richtigen Finanz- bzw. Gegenkonten, Steuersätze und Kostenstellen zugeordnet wurden.
