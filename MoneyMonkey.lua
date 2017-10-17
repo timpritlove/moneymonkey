@@ -31,6 +31,8 @@ Exporter{version       = 1.00,
 
 Exportdatei = {
  { "Datum",          "Datum" },
+ { "BelegNr",        "BelegNr" },
+ { "Referenz",       "Referenz" },
  { "Betrag",         "Betrag" },
  { "Waehrung",       "Währung" },
  { "Text",           "Text" },
@@ -146,7 +148,7 @@ function KategorieMetadaten (KategoriePfad)
       -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
       for Nummer in string.gmatch(Metadaten, "#(%d+)%s*") do
         if AnzahlKostenstellen == 3 then
-          error("Zu viele Kostenstellen in der Kategorie angegeben")
+          error(string.format("Mehr als zwei Kostenstellen in der Kategorie angegeben\n\nKategorie:\t%s\n", Kategorie), 0)
         end
         Kostenstellen[AnzahlKostenstellen] = Nummer
         AnzahlKostenstellen = AnzahlKostenstellen + 1
@@ -233,7 +235,7 @@ function WriteTransactions (account, transactions)
     -- Finanzkonto für verwendetes Bankkonto ermitteln
 
     if ( Bankkonto.Finanzkonto == "" ) then
-      error ( "Kein Finanzkonto für " .. account.name .. " gesetzt" )
+      error ( string.format("Kein Finanzkonto für Konto %s gesetzt.\n\nBitte Feld 'Finanzkonto' in den benutzerdefinierten Feldern in den Einstellungen zum Konto setzen.", account.name ), 0)
     end
 
     Buchung.Finanzkonto = Bankkonto.Finanzkonto
@@ -282,6 +284,10 @@ function WriteTransactions (account, transactions)
     -- Buchung exportieren
 
     if Exportieren then
+      if transaction.checkmark == false then
+        error(string.format("Abbruch des Exports, da ein Umsatz nicht als erledigt markiert wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+      end
+
       if Buchung.Finanzkonto and Buchung.Gegenkonto then
 
         local line = ""
@@ -294,8 +300,11 @@ function WriteTransactions (account, transactions)
         assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
       else
         DruckeUmsatz ("UNVOLLSTÄNDIG", Umsatz)
-        print (string.format( "Finanzkonto: %s Gegenkonto: %s\n", Buchung.Finanzkonto, Buchung.Gegenkonto ) )
-        error("Abbruch des Exports, da Kontenzuordnung unvollständig ist.")
+        if (Umsatz.Kategorie == nil) then
+          error(string.format("Einem Umsatz wurde keine Kategorie zugewiesen. Export daher nicht möglich.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s %s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+        else
+          error(string.format("Abbruch des Exports, da Kontenzuordnung unvollständig ist (Finanzkonto: %s Gegenkonto: %s).\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", Buchung.Finanzkonto, Buchung.Gegenkonto, account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+        end
       end
     else
         DruckeUmsatz ("ÜBERSPRUNGEN", Umsatz)
