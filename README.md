@@ -1,18 +1,18 @@
 # MoneyMonkey
 
-**MoneyMonkey** ist eine Erweiterung (Plugin, Extension) für das Programm _MoneyMoney_ (macOS). Mit _MoneyMonkey_ können Umsätze auf einem oder mehreren in _MoneyMoney_ geführten Konten direkt in eine Buchhaltungssoftware als vollständige Buchungssätze zu importieren.
+**MoneyMonkey** ist eine Erweiterung (Plugin, Extension) für das Online-Banking-Programm _[MoneyMoney](https://moneymoney-app.com)_ (macOS). Mit **MoneyMonkey** können Umsätze von einem oder mehreren in _MoneyMoney_ geführten Konten direkt in eine Buchhaltungssoftware als vollständige Buchungssätze importiert werden und damit den Buchungsvorgang automatisieren.
 
 Die für die Buchungssätze erforderliche Zuordnung von Umsätzen zu Finanz- und Gegenkonten, Steuersätzen und Kostenstellen wird durch die Zuweisung der Umsätze in Kategorien vorgenommen.
 
 ## MonKey Office
 
-Dieses Exportskript wurde für eine automatisierte Datenübergabe an die Buchhaltungssoftware _MonKey Office_ entwickelt (und ist nur damit getestet worden). Es sollte sich aber im Prinzip auch mit vergleichbaren Buchhaltungsprogrammen vertragen, die einen DATEV-ähnlichen Import und Export von Buchungen ermöglichen.
+Dieses Exportskript wurde für eine automatisierte Datenübergabe an die Buchhaltungssoftware _[MonKey Office](http://www.monkey-office.de/products/monkeyoffice/index.html)_ entwickelt (und ist bisher nur damit getestet worden). Es sollte sich aber im Prinzip auch mit vergleichbaren Buchhaltungsprogrammen vertragen, die einen DATEV-ähnlichen Import von Buchungen ermöglichen.
 
-Mit **MoneyMonkey** ist es möglich, eine Online-Banking-gestützte Buchhaltung weitgehend automatisiert zu unterhalteb, erfordert aber nach wie vor Kenntnisse in der Buchhaltungssoftware.
+Mit **MoneyMonkey** ist es möglich, eine Online-Banking-gestützte Buchhaltung weitgehend automatisiert zu unterhalten, erfordert aber nach wie vor Kenntnisse in der Buchhaltungssoftware, um die Ergebnisse zu prüfen und ggf. noch weitere Umbuchungen vorzunehmen.
 
-**MoneyMonkey** ersetzt dafür die lästigen Wege über die nervige Bankauzug-Funktion von _MonKey Office_ und ist besonders effizient, wenn viele wiederkehrende Buchungstypen vorliegen, da diese dann in _MoneyMoney_ meist automatisch bestimmten Buchungskategorien zugeordnet werden können.
+**MoneyMonkey** ersetzt dafür die lästigen Wege über die nervige Bankauszug-Funktion von _MonKey Office_ und ist besonders effizient, wenn viele wiederkehrende Buchungstypen vorliegen, da diese dann in _MoneyMoney_ oft [automatisch bestimmten Buchungskategorien zugeordnet werden können]( https://moneymoney-app.com/categorization/ ).
 
-## Installation der Erweiterung
+## Installation
 
 Starte _MoneyMoney_ und wähle aus dem Menü `Hilfe` den Eintrag `Zeige Datenbank im Finder`. Im Finder öffnet sich dann der _MoneyMoney_-Ordner, der die Datenbank, die Kontoauszüge und die Erweiterungen anzeigen.
 
@@ -20,47 +20,51 @@ Kopiere die Datei `MoneyMonkey.lua` in den Ordner "Extensions". Das war's.
 
 ## Konfiguration
 
-### Konfiguration des Finanzkontos
+Bevor der Export der Buchungen durchgeführt werden kann, müssen innerhalb von _MoneyMoney_ die Bankkonten mit Informationen angereichert und Kategorien eingerichtet werden.
 
-Für jedes in _MoneyMoney_ geführte Bankkonto muss in der Buchhaltungssoftware ein entsprechendes Konto eingerichtet werden.
+### Konfiguration der Bankkonten
 
-Dieses  **Finanzkonto** (z.B. 1800) muss in _MoneyMoney_ in die Attribute des Bankkontos eingetragen werden.
+Für jedes in _MoneyMoney_ geführte Bankkonto muss in der Buchhaltungssoftware ein entsprechendes Konto eingerichtet sein.
+
+Dieses  **Finanzkonto**  (z.B. _1800_ für ein Girokonto im Kontenrahmen SKR 04) muss in _MoneyMoney_ in die _benutzerdefinierten Felder_ jedes Bankkontos eingetragen werden, das später exportiert werden soll.
 
 1. Konto in der Seitenleiste auswählen
-2. Aus dem Kontextmenü den Eintrag "Einstellungen …" auswählen (oder CMD-I)
-3. In der Seitenleiste des Einstellungen-Fensters den Bereich "Notizen" auswählen
-4. In der Tabelle "Benutzerdefinierte Felder" für `Attribut` "Finanzkonto" und für `Wert` das entsprechende Konto aus der Buchhaltung eintragen, das dieses Bankkonto repräsentiert (z.B. 1800 für ein Girokonto im Kontenrahmen SKR 04)
+2. Aus dem Kontextmenü den Eintrag `Einstellungen …` auswählen (oder `CMD-I` drücken)
+3. In der Seitenleiste des Einstellungen-Fensters den Bereich `Notizen` auswählen
+4. In der Tabelle _Benutzerdefinierte Felder_ in der Spalte _Attribut_ `Finanzkonto` und für _Wert_ das entsprechende Konto aus der Buchhaltung eintragen, das dieses Bankkonto repräsentiert (z.B. `1800`)
 5. Dialog mit OK beenden
 
-Hinweis: Benutzerdefinierte Felder stehen in _MoneyMoney_ seit Version 2.3.0 bereit. In Vorgängerversionen mussten die Felder mit einer `Attribut=Wert` Notation direkt in das Notizfeld eingetragen werden. Das wird immer noch unterstützt, es sollte aber auf das neue Modell umgestiegen werden.
+_Anmerkung:_ Benutzerdefinierte Felder stehen in _MoneyMoney_ seit Version 2.3.0 bereit. In Vorgängerversionen mussten die Felder mit einer `Attribut=Wert` Notation direkt in das Notizfeld eingetragen werden. Das wird immer noch unterstützt, es sollte aber auf das neue Modell umgestiegen werden.
 
 Das Finanzkonto wird in den exportierten Buchungen automatisch als *Soll-Konto* (bei Einnahmen) bzw. als *Haben-Konto* (bei Ausgaben) eingetragen.
 
-#### Währung spezifizieren
+#### Währung für Bankkonto spezifizieren
 
-Zusätzlich zum Finanzkonto kann für das Bankkonto auch noch die Währung gesetzt werden. Dazu muss entsprechend das Attribut `Waehrung` gesetzt werden (z.B. auf _EUR_).
+Zusätzlich zum Finanzkonto kann für das Bankkonto optional auch noch die Währung gesetzt werden. Dazu muss entsprechend die Spalte _Attribut_ auf `Waehrung` und die Spalte _Wert_ auf das entsprechende Währungskennzeichen  (z.B. auf `EUR`).
 
 Wenn **MoneyMonkey** die Währung des Kontos kennt, so werden Buchungen in einer anderen Währung automatisch übersprungen. Das ist z.B. bei PayPal-Konten hilfreich, da _MoneyMoney_ diese Buchungen selbst nicht trennt und gemeinsam exportiert. Würden diese Buchungen übernommen, würde der Saldo nicht stimmen.
 
-### Gegenkonto konfigurieren
+### Kategorien einrichten
 
 Zusätzlich zum Finanzkonto muss für jede Buchung ein entsprechendes **Gegenkonto** konfiguriert werden. Dieses ergibt sich aus der in _MoneyMoney_ zugewiesenen _Kategorie_ des Umsatzes.
 
 Das Gegenkonto wird direkt an den eigentlichen Namen der Kategorie am Ende des Titels in eckigen Klammern eingetragen (z.B. `Bürobedarf [6815]`).
 
-Um den Namen einer Kategorie zu ändern, wählt man die Kategorie in der Seitenleiste aus und wählt aus dem Kontextmenü den Eintrag `Einstellungen …` (oder CMD-I).
+Um den Namen einer Kategorie zu ändern, wählt man die Kategorie in der Seitenleiste aus und wählt aus dem Kontextmenü den Eintrag `Einstellungen …` (oder CMD-I drücken).
 
 #### Umsätze überspringen
 
-Wird für eine Kategorie das Gegenkonto `[0000]` ausgewählt, werden die dieser Kategorie zugewiesenen Umsätze automatisch **NICHT** exportiert.
+Wird für eine Kategorie das Gegenkonto `[0000]` bestimmt, werden die dieser Kategorie zugewiesenen Umsätze automatisch übersprungen, also **NICHT** exportiert.
 
 Diese Funktion sollte nur in Ausnahmefällen gewählt werden (z.B. für Buchungen in Fremdwährungen, wofür sich aber eher die Einstellung einer Währung für das Bankkonto (siehe oben) empfiehlt).
 
+Wenn Buchungen, deren Saldo nicht null ist aus dem Export herausgenommen werden, werden in der Buchhaltung falsche Saldi erzeugt, die dann manuell korrigiert werden müssten.
+
 ### Steuersatz konfigurieren
 
-Für die Buchungskonten, die über eine *Steuerautomatik* verfügen (wo sich also der Steuersatz automatisch aus dem Buchungskonto ableitet) ist in der Regel keine  Angabe eines Steuersatzes erforderlich.
+Für die Gegenkonten, die über eine *Steuerautomatik* verfügen (wo sich also der Steuersatz automatisch aus dem Buchungskonto ableitet) ist in der Regel keine Angabe eines Steuersatzes erforderlich.
 
-Für Buchungskonten ohne Steuerautomatik oder solche mit variablen Steuersätzen kann in der Kategorie auch noch ein **Steuersatz** mit angegeben werden. Dazu muss der Steuersatz in geschweiften Klammern in den Titel geschrieben werden.
+Für Gegenkonten ohne Steuerautomatik oder solche mit variablen Steuersätzen kann in der Kategorie auch noch ein **Steuersatz** mit angegeben werden. Dazu muss der Steuersatz in geschweiften Klammern in den Titel geschrieben werden.
 
 ```
 Reisekosten Mietwagen [6673] {VSt19}
@@ -84,39 +88,38 @@ Werden einer Buchung mehr als zwei Kostenstellen zugewiesen führt das zum Abbru
 
 ### Vererbung über Kategoriegruppen
 
-_MoneyMoney_ erlaubt die Gruppierung von Kategorien durch Kategoriegruppen. Wenn man in _MoneyMoney_ mehrere Kategorien für bestimmte Umsätze vergeben möchte, die aber alle über die gleiche oder zumindest nur in Teilen abweichende Buchhaltungs-Konfiguration verfügen, können die gemeinsamen Werte der Kategoriegruppe zugewiesen werden.
+_MoneyMoney_ erlaubt die Gruppierung von Kategorien durch Kategoriegruppen. Wenn man mehrere Unterkategorien für bestimmte Umsätze unterscheiden möchte, die aber alle über die gleiche oder zumindest nur in Teilen abweichende Buchhaltungs-Konfiguration verfügen, können die gemeinsamen Werte der Kategoriegruppe zugewiesen werden.
 
-Diese Konfigurationswerte werden automatisch an die darunter liegenden Kategorien vererbt. Werden in den Unterkategorien das *Gegenkonto* oder der *Steuersatz* ein weiteres Mal spezifiziert, *überschreiben* diese Werte die Vorgabe der Gruppe. Werden in der Unterkategorie *Kostenstellen* spezifiziert, so *ergänzen* diese die vorher benannten Kostenstellen.
+Diese Einstellungen werden automatisch an die darunter liegenden Kategorien nach folgenden Regeln vererbt:
 
-Folgende Hierarchie:
+* Werden in den Unterkategorien das *Gegenkonto* oder der *Steuersatz* ein weiteres Mal spezifiziert, *überschreiben* diese Werte die Vorgabe der Gruppe.
+* Werden in der Unterkategorie *Kostenstellen* spezifiziert, so *ergänzen* diese die vorher benannten Kostenstellen.
 
-```
-Reisekosten [6673] {VSt19} #2000
--- car2go #2010
--- DriveNow #2020
--- Flinkster #2030
--- Taxi {VSt7} #2040
-```
+Folgende Kategorie-Hierarchie:
+
+* `Reisekosten [6673] {VSt19} #2000`
+  * `car2go #2010`
+  * `DriveNow #2020`
+  * `Flinkster #2030`
+  * `Taxi {VSt7} #2040`
 
 ist äquivalent zu
 
-```
-car2go [6673] {VSt19} #2000 #2010
-DriveNow [6673] {VSt19} #2000 #2020
-Flinkster [6673] {VSt19} #2000 #2030
-Taxi [6673] {VSt7} #2000 #2040
-```
+* `car2go [6673] {VSt19} #2000 #2010`
+* `DriveNow [6673] {VSt19} #2000 #2020`
+* `Flinkster [6673] {VSt19} #2000 #2030`
+* `Taxi [6673] {VSt7} #2000 #2040`
 
 aber deutlich übersichtlicher und einfacher zu verwalten.
 
 
 ## MoneyMonkey starten
 
-Wenn nun Umsätze angezeigt werden, kann man im Menü `Konto` den Eintrag `Umsätze exportieren …` auswählen. In der Folge erscheint ein Dialog zur Bestimmung einer Exportdatei. In dem Auswahlmenü unten in diesem Dialog kann man nun den Punkt `Buchungssätze (.csv)` auswählen. Damit wird das Plugin für den Export ausgewählt.
+Wenn nun in _MoneyMoney_ Umsätze ausgewählt werden, kann man im Menü `Konto` den Eintrag `Umsätze exportieren …` auswählen. In der Folge erscheint ein Dialog zur Bestimmung einer Exportdatei. In dem Auswahlmenü unten in diesem Dialog kann man nun den Punkt `Buchungssätze (.csv)` auswählen. Damit wird das Plugin für den Export ausgewählt.
 
 Wenn keine Konfigurationsfehler gefunden werden startet **MoneyMonkey** anschließend den Export in die angegebene Datei.
 
-Das Skript beendet den Export vorzeitig wenn einer der folgenden Fehler detektiert wurde:
+Das Skript _beendet_ den Export vorzeitig wenn einer der folgenden Fehler detektiert wurde:
 
 * Ein Umsatz wurde keiner Kategorie zugeordnet
 * Für eine eingestellte Kategorie ist kein Gegenkonto ermittelbar
@@ -147,3 +150,5 @@ Um die Datei imporieren zu können muss zunächst eine Einstellung dafür angele
 ## Import starten
 
 Wenn die Einstellungen für den Import vorgenommen wurden kann die Exportdatei importiert werden. Dabei sollte ggf. noch mal überprüft werden, ob die richtigen Spalten gewählt wurden und ob den Buchungen die richtigen Finanz- bzw. Gegenkonten, Steuersätze und Kostenstellen zugeordnet wurden.
+
+Nach dem Import sind die Buchungen sofort gültig und müssen nicht noch einmal bestätigt werden.
