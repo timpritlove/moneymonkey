@@ -117,7 +117,7 @@ end
 -- ergänzen sich, es dürfen aber nur maximal zwei unterschiedliche Kostenstellen
 -- angegeben werden.
 
-function KategorieMetadaten (KategoriePfad)
+function UmsatzMetadaten (KategoriePfad, Notiz)
   local KategorieNeuerPfad
   local Gegenkonto, Steuersatz, KS1, KS2
   local AnzahlKostenstellen = 1
@@ -147,13 +147,14 @@ function KategorieMetadaten (KategoriePfad)
 
       -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
       for Nummer in string.gmatch(Metadaten, "#(%d+)%s*") do
-        if AnzahlKostenstellen == 3 then
-          error(string.format("Mehr als zwei Kostenstellen in der Kategorie angegeben\n\nKategorie:\t%s\n", Kategorie), 0)
+        if AnzahlKostenstellen > 2 then
+          error(string.format("Der Export wurde abgebrochen, da mehr als zwei Kostenstellen über die Kategorie angegeben wurde.\n\nKategorie:\t%s\n", Kategorie), 0)
         end
         Kostenstellen[AnzahlKostenstellen] = Nummer
         AnzahlKostenstellen = AnzahlKostenstellen + 1
       end
     end
+
 
     -- Leading/Trailing Whitespace aus dem verbliebenen Kategorie-Titel entfernen
     _, _, Kategorie = string.find (Kategorie, "%s*(.-)%s*$")
@@ -166,6 +167,14 @@ function KategorieMetadaten (KategoriePfad)
       KategorieNeuerPfad = Kategorie
     end
 
+  end
+
+  for Nummer in string.gmatch(Notiz, "#(%d+)%s*") do
+    if AnzahlKostenstellen > 2 then
+      error(string.format("Der Export wurde abgebrochen, da zu viele weitere Kostenstellen in den Notizen angegeben wurden.\n\nKategorie:\t%s\nNotiz:\t%s\nKostenstelle 1:\t%s\nKostenstelle 2:\t%s", Kategorie, Notiz, Kostenstellen[1], Kostenstellen[2]), 0)
+    end
+    Kostenstellen[AnzahlKostenstellen] = Nummer
+    AnzahlKostenstellen = AnzahlKostenstellen + 1
   end
     
   -- Alle extrahierten Werte zurückliefern
@@ -247,7 +256,7 @@ function WriteTransactions (account, transactions)
     -- Extrahiere Buchungsinformationen aus dem Kategorie-Text
 
     Umsatz.Kategorie, Buchung.Gegenkonto, Buchung.Steuersatz,
-    Buchung.Kostenstelle1, Buchung.Kostenstelle2 = KategorieMetadaten (transaction.category)
+    Buchung.Kostenstelle1, Buchung.Kostenstelle2 = UmsatzMetadaten (transaction.category, Umsatz.Notiz)
 
     Buchung.Bemerkung = concatenate ("(", Umsatz.Kontonummer, ") [", Umsatz.Kategorie, "] {", Umsatz.Typ, "}" )
 
@@ -285,7 +294,7 @@ function WriteTransactions (account, transactions)
 
     if Exportieren then
       if transaction.checkmark == false then
-        error(string.format("Abbruch des Exports, da ein Umsatz nicht als erledigt markiert wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+        error(string.format("Der Export wurde abgebrochen, da ein Umsatz nicht als erledigt markiert wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
       end
 
       if Buchung.Finanzkonto and Buchung.Gegenkonto then
@@ -301,9 +310,9 @@ function WriteTransactions (account, transactions)
       else
         DruckeUmsatz ("UNVOLLSTÄNDIG", Umsatz)
         if (Umsatz.Kategorie == nil) then
-          error(string.format("Einem Umsatz wurde keine Kategorie zugewiesen. Export daher nicht möglich.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s %s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+          error(string.format("Der Export wurde abgebrochen, da einem Umsatz keine Kategorie zugewiesen wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s %s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
         else
-          error(string.format("Abbruch des Exports, da Kontenzuordnung unvollständig ist (Finanzkonto: %s Gegenkonto: %s).\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", Buchung.Finanzkonto, Buchung.Gegenkonto, account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+          error(string.format("Der Export wurde abgebrochen, da die Kontenzuordnung für die Buchhaltung unvollständig ist (Finanzkonto: %s Gegenkonto: %s).\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", Buchung.Finanzkonto, Buchung.Gegenkonto, account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
         end
       end
     else
