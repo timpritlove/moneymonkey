@@ -41,7 +41,7 @@ Exportdatei = {
  { "Steuersatz",     "Steuersatz" },
  { "Kostenstelle1",  "Kostenstelle1" },
  { "Kostenstelle2",  "Kostenstelle2" },
- { "Bemerkung",      "Bemerkung" }
+ { "Notiz",          "Notiz" }
 }
 
 
@@ -224,7 +224,7 @@ function WriteTransactions (account, transactions)
       BelegNr = "",
       Referenz = string.gsub(io.filename, ".*/", ""),
       Waehrung = Umsatz.Waehrung,
-      Bemerkung = ""
+      Notiz = ""
     }
 
 
@@ -258,7 +258,7 @@ function WriteTransactions (account, transactions)
     Umsatz.Kategorie, Buchung.Gegenkonto, Buchung.Steuersatz,
     Buchung.Kostenstelle1, Buchung.Kostenstelle2 = UmsatzMetadaten (transaction.category, Umsatz.Notiz)
 
-    Buchung.Bemerkung = concatenate ("(", Umsatz.Kontonummer, ") [", Umsatz.Kategorie, "] {", Umsatz.Typ, "}" )
+    Buchung.Notiz = concatenate ("(", Umsatz.Kontonummer, ") [", Umsatz.Kategorie, "] {", Umsatz.Typ, "}" )
 
     -- Buchungen mit Betrag 0,00 nicht exportieren
 
