@@ -221,8 +221,8 @@ function WriteTransactions (account, transactions)
       Steuersatz = nil,
       Kostenstelle1 = nil,
       Kostenstelle2 = nil,
-      BelegNr = "",
-      Referenz = string.gsub(io.filename, ".*/", ""),
+      BelegNr = string.gsub(io.filename, ".*/", ""), -- Dateiname des Exports ist die Belegnummer
+      Referenz = Umsatz.Referenz,
       Waehrung = Umsatz.Waehrung,
       Notiz = ""
     }
