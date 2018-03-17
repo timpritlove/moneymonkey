@@ -146,7 +146,7 @@ function UmsatzMetadaten (KategoriePfad, Notiz)
       end
 
       -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
-      for Nummer in string.gmatch(Metadaten, "#(%d+)%s*") do
+      for Nummer in string.gmatch(Metadaten, "#(%g+)%s*") do
         if AnzahlKostenstellen > 2 then
           error(string.format("Der Export wurde abgebrochen, da mehr als zwei Kostenstellen über die Kategorie angegeben wurde.\n\nKategorie:\t%s\n", Kategorie), 0)
         end
@@ -169,7 +169,7 @@ function UmsatzMetadaten (KategoriePfad, Notiz)
 
   end
 
-  for Nummer in string.gmatch(Notiz, "#(%d+)%s*") do
+  for Nummer in string.gmatch(Notiz, "#(%g+)%s*") do
     if AnzahlKostenstellen > 2 then
       error(string.format("Der Export wurde abgebrochen, da zu viele weitere Kostenstellen in den Notizen angegeben wurden.\n\nKategorie:\t%s\nNotiz:\t%s\nKostenstelle 1:\t%s\nKostenstelle 2:\t%s", Kategorie, Notiz, Kostenstellen[1], Kostenstellen[2]), 0)
     end
