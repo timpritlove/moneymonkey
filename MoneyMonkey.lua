@@ -181,9 +181,10 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
     KommentarNeu = string.gsub(KommentarNeu, "#" .. KS .. "%s*", "")
   end
 
-  _, _, Text = string.find (Kommentar, "{(.+)}")
+  Begin, End, Text = string.find (Kommentar, "{(.+)}")
   if Text then
     Steuersatz = Text
+    KommentarNeu = string.sub(KommentarNeu, 1, Begin) .. string.sub(KommentarNeu, End)
     KommentarNeu = string.gsub(KommentarNeu, "{" .. Text .. "}%s*", "")
   end
 
