@@ -117,8 +117,8 @@ end
 -- ergänzen sich, es dürfen aber nur maximal zwei unterschiedliche Kostenstellen
 -- angegeben werden.
 
-function UmsatzMetadaten (KategoriePfad, Notiz)
-  local KategorieNeuerPfad
+function UmsatzMetadaten (KategoriePfad, Kommentar)
+  local KategoriePfadNeu
   local Gegenkonto, Steuersatz, KS1, KS2
   local AnzahlKostenstellen = 1
   local Kostenstellen = {}
@@ -146,7 +146,7 @@ function UmsatzMetadaten (KategoriePfad, Notiz)
       end
 
       -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
-      for Nummer in string.gmatch(Metadaten, "#(%g+)%s*") do
+      for Nummer in string.gmatch(Metadaten, "#(%w+)%s*") do
         if AnzahlKostenstellen > 2 then
           error(string.format("Der Export wurde abgebrochen, da mehr als zwei Kostenstellen über die Kategorie angegeben wurde.\n\nKategorie:\t%s\n", Kategorie), 0)
         end
@@ -161,24 +161,36 @@ function UmsatzMetadaten (KategoriePfad, Notiz)
 
 
     -- Neuen Kategoriepfad aufbauen
-    if KategorieNeuerPfad then
-      KategorieNeuerPfad = KategorieNeuerPfad .. " - " .. Kategorie
+    if KategoriePfadNeu then
+      KategoriePfadNeu = KategoriePfadNeu .. " - " .. Kategorie
     else
-      KategorieNeuerPfad = Kategorie
+      KategoriePfadNeu = Kategorie
     end
 
   end
 
-  for Nummer in string.gmatch(Notiz, "#(%g+)%s*") do
+  -- Umsatz-Kommentar nach Kostenstellen oder Steuersätzen durchsuchen
+
+  KommentarNeu = Kommentar
+  for KS in string.gmatch(Kommentar, "#(%w+)%s*") do
     if AnzahlKostenstellen > 2 then
       error(string.format("Der Export wurde abgebrochen, da zu viele weitere Kostenstellen in den Notizen angegeben wurden.\n\nKategorie:\t%s\nNotiz:\t%s\nKostenstelle 1:\t%s\nKostenstelle 2:\t%s", Kategorie, Notiz, Kostenstellen[1], Kostenstellen[2]), 0)
     end
-    Kostenstellen[AnzahlKostenstellen] = Nummer
+    Kostenstellen[AnzahlKostenstellen] = KS
     AnzahlKostenstellen = AnzahlKostenstellen + 1
+    KommentarNeu = string.gsub(KommentarNeu, "#" .. KS .. "%s*", "")
   end
-    
+
+  _, _, Text = string.find (Kommentar, "{(.+)}")
+  if Text then
+    Steuersatz = Text
+    KommentarNeu = string.gsub(KommentarNeu, "{" .. Text .. "}%s*", "")
+  end
+
+  KommentarNeu = string.gsub(KommentarNeu, "%s*$", "")
+
   -- Alle extrahierten Werte zurückliefern
-  return KategorieNeuerPfad, Gegenkonto, Steuersatz, Kostenstellen[1], Kostenstellen[2]
+  return KategoriePfadNeu, KommentarNeu, Gegenkonto, Steuersatz, Kostenstellen[1], Kostenstellen[2]
 end
 
 
@@ -204,7 +216,7 @@ function WriteTransactions (account, transactions)
       Bankcode = transaction.bankcode or "", 
       Datum = MM.localizeDate(transaction.bookingDate),
       Betrag = transaction.amount,
-      Notiz = transaction.comment or "",
+      Kommentar = transaction.comment or "",
       Verwendungszweck = transaction.purpose or "",
       Waehrung = transaction.currency or ""
     }
@@ -214,7 +226,7 @@ function WriteTransactions (account, transactions)
     local Buchung = {
       Umsatzart = Umsatz.Typ,
       Datum = Umsatz.Datum,
-      Text = Umsatz.Name .. ": " .. Umsatz.Verwendungszweck .. ((Umsatz.Notiz ~= "") and ( " (" .. Umsatz.Notiz .. ")") or ""),
+      Text = nil,
       Finanzkonto = nil,
       Gegenkonto = nil,
       Betrag = nil,
@@ -251,14 +263,15 @@ function WriteTransactions (account, transactions)
 
 
 
+    -- Extrahiere Buchungsinformationen aus dem Kategorie-Text und Kommentar
+
+    Umsatz.Kategorie, Umsatz.Kommentar, Buchung.Gegenkonto, Buchung.Steuersatz,
+    Buchung.Kostenstelle1, Buchung.Kostenstelle2 = UmsatzMetadaten (transaction.category, Umsatz.Kommentar)
 
 
-    -- Extrahiere Buchungsinformationen aus dem Kategorie-Text
+    Buchung.Text = Umsatz.Name .. ": " .. Umsatz.Verwendungszweck .. ((Umsatz.Kommentar ~= "") and ( " (" .. Umsatz.Kommentar .. ")") or "")
+    Buchung.Notiz = ((Umsatz.Kontonummer ~= "") and ( "(" .. Umsatz.Kontonummer .. ") ") or "") -- .. "[" .. Umsatz.Kategorie .. "] {" .. Umsatz.Typ .. "}"
 
-    Umsatz.Kategorie, Buchung.Gegenkonto, Buchung.Steuersatz,
-    Buchung.Kostenstelle1, Buchung.Kostenstelle2 = UmsatzMetadaten (transaction.category, Umsatz.Notiz)
-
-    Buchung.Notiz = concatenate ("(", Umsatz.Kontonummer, ") [", Umsatz.Kategorie, "] {", Umsatz.Typ, "}" )
 
     -- Buchungen mit Betrag 0,00 nicht exportieren
 
