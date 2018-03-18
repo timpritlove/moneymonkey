@@ -2,7 +2,7 @@
 
 **MoneyMonkey** ist eine Erweiterung (Plugin, Extension) für das Online-Banking-Programm _[MoneyMoney](https://moneymoney-app.com)_ (macOS). Mit **MoneyMonkey** können Umsätze von einem oder mehreren in _MoneyMoney_ geführten Konten direkt in eine Buchhaltungssoftware als vollständige Buchungssätze importiert werden und damit den Buchungsvorgang automatisieren.
 
-Die für die Buchungssätze erforderliche Zuordnung von Umsätzen zu Finanz- und Gegenkonten, Steuersätzen und Kostenstellen wird durch die Zuweisung der Umsätze in Kategorien vorgenommen.
+Die für die Buchungssätze erforderliche Zuordnung von Umsätzen zu Finanz- und Gegenkonten, Steuersätzen und Kostenstellen wird durch die Zuweisung der Umsätze in Kategorien bzw. durch Anmerkungen in den Kommentarfeldern der Umsätze vorgenommen.
 
 ## MonKey Office
 
@@ -54,11 +54,11 @@ Um den Namen einer Kategorie zu ändern, wählt man die Kategorie in der Seitenl
 
 #### Umsätze überspringen
 
-Wird für eine Kategorie das Gegenkonto `[0000]` bestimmt, werden die dieser Kategorie zugewiesenen Umsätze automatisch übersprungen, also **NICHT** exportiert.
+Umsätze, deren Betrag 0,00 ist, werden generell  **NICHT** exportiert.
 
-Diese Funktion sollte nur in Ausnahmefällen gewählt werden (z.B. für Buchungen in Fremdwährungen, wofür sich aber eher die Einstellung einer Währung für das Bankkonto (siehe oben) empfiehlt).
+Wird für eine Kategorie das Gegenkonto `[0000]` bestimmt, werden die dieser Kategorie zugewiesenen Umsätze automatisch übersprungen, also **NICHT** exportiert. Diese Funktion sollte nur in Ausnahmefällen gewählt werden (z.B. für Buchungen in Fremdwährungen, wofür sich aber eher die Einstellung einer Währung für das Bankkonto (siehe oben) empfiehlt).
 
-Wenn Buchungen, deren Saldo nicht null ist aus dem Export herausgenommen werden, werden in der Buchhaltung falsche Saldi erzeugt, die dann manuell korrigiert werden müssten.
+_Hinweis_: Wenn Buchungen, deren Saldo nicht null ist, aus dem Export herausgenommen werden, werden in der Buchhaltung falsche Saldi erzeugt, die dann manuell korrigiert werden müssten.
 
 ### Steuersatz konfigurieren
 
@@ -69,9 +69,16 @@ Für Gegenkonten ohne Steuerautomatik oder solche mit variablen Steuersätzen ka
 ```
 Reisekosten Mietwagen [6673] {VSt19}
 Reisekosten Taxi [6673] {VSt7}
+Betriebsausgaben 0% [6300] {-}
 ```
 
 Die Bezeichnungen des Steuersatzes müssen dabei den in der Buchhaltungssoftware verwendeten Konten entsprechen (z.B. Kontenrahmen SKR03 oder SKR04), da sie vom Exportskript nur durchgereicht und nicht interpretiert werden.
+
+#### Abweichenden Steuersatz pro Umsatz einstellen
+
+Wenn man nur für einen oder wenige Umsätze einen abweichenden Steuersatz angeben möchte, lohnt sich Anlegen einer Kategorie dafür oft nicht und die Liste der Kategorien würde nur unnötig aufgebläht und entsprechend unübersichtlich werden. Daher kann man für diese Ausnahmen den Steuersatz auch direkt im Notizfeld eines Umsatzes angeben.
+
+Dazu wählt man den Menüeintrag `Konto -> Notiz hinzufügen...` (bzw. aus dem Kontextmenü) aus und trägt einen entsprechenden Text ein, der den gewünschten Steuersatz wie oben beschrieben angibt.
 
 ### Kostenstellen konfigurieren
 
@@ -80,11 +87,19 @@ Zusätzlich zu Gegenkonto und Steuersatz können über Kategorien auch **Kostens
 Die Kostenstellen werden im Kategorie-Titel über das Rautezeichen eingeleitet:
 
 ```
-Einnahmen Veranstaltungen Verkauf [4400] #1000
-Einnahmen Veranstaltungen Tickets [4300] #2000
+Einnahmen Veranstaltungen Verkauf [4400] #EVENT
+Einnahmen Veranstaltungen Tickets [4300] #EVENT
 ```
 
-Werden einer Buchung mehr als zwei Kostenstellen zugewiesen führt das zum Abbruch des Exports.
+Werden einer Buchung mehr als zwei unterschiedliche Kostenstellen zugewiesen führt das zum Abbruch des Exports.
+
+_Hinweis:_ *MonKey Office* erlaubt es, Kostenstellen mit beliebigen Zeichen (einschließlich Leerzeichen) zu benennen. *MoneyMonkey* unterstützt aus Gründen der Übersichtlichkeit und als Analogie zu Hashtags nur alphanumerische Bezeichner (Groß- und Kleinbuchstaben und Ziffern, ohne Leerzeichen).
+
+
+#### Kostenstellen pro Umsatz einstellen
+
+Wie schon beim Steuersatz können auch die Kostenstellen pro Umsatz angegeben werden, in dem sie in das Notizfeld des Umsatzes eingetragen werden (`Konto -> Notiz hinzufügen...`). So können auch Einzelumsätze unabhängig von Ihrer Kategorie z.B. einzelnen Projekten zugewiesen und später in *MonKey Office* ausgewertet werden.
+
 
 ### Vererbung über Kategoriegruppen
 
@@ -97,20 +112,20 @@ Diese Einstellungen werden automatisch an die darunter liegenden Kategorien nach
 
 Folgende Kategorie-Hierarchie:
 
-* `Reisekosten [6673] {VSt19} #2000`
-  * `car2go #2010`
-  * `DriveNow #2020`
-  * `Flinkster #2030`
-  * `Taxi {VSt7} #2040`
+* `Reisekosten [6673] {VSt19} #REISE`
+  * `car2go #CAR2GO`
+  * `DriveNow #DRIVENOW`
+  * `Flinkster #FLINKSTER`
+  * `Taxi {VSt7} #TAXI`
 
 ist äquivalent zu
 
-* `car2go [6673] {VSt19} #2000 #2010`
-* `DriveNow [6673] {VSt19} #2000 #2020`
-* `Flinkster [6673] {VSt19} #2000 #2030`
-* `Taxi [6673] {VSt7} #2000 #2040`
+* `car2go [6673] {VSt19} #REISE #CAR2GO`
+* `DriveNow [6673] {VSt19} #REISE #DRIVENOW`
+* `Flinkster [6673] {VSt19} #REISE #FLINKSTER`
+* `Taxi [6673] {VSt7} #REISE #TAXI`
 
-aber deutlich übersichtlicher und einfacher zu verwalten.
+ist aber deutlich übersichtlicher und einfacher zu verwalten.
 
 
 ## MoneyMonkey starten
@@ -151,4 +166,5 @@ Um die Datei imporieren zu können muss zunächst eine Einstellung dafür angele
 
 Wenn die Einstellungen für den Import vorgenommen wurden kann die Exportdatei importiert werden. Dabei sollte ggf. noch mal überprüft werden, ob die richtigen Spalten gewählt wurden und ob den Buchungen die richtigen Finanz- bzw. Gegenkonten, Steuersätze und Kostenstellen zugeordnet wurden.
 
-Nach dem Import sind die Buchungen sofort gültig und müssen nicht noch einmal bestätigt werden.
+Nach dem Import sind die Buchungen sofort gültig und müssen nicht noch einmal bestätigt werden. Damit lassen sich auch große Zahlen an Umsätzen schnell in Buchungen überführen.
+
