@@ -274,6 +274,12 @@ function WriteTransactions (account, transactions)
     Buchung.Notiz = ((Umsatz.Kontonummer ~= "") and ( "(" .. Umsatz.Kontonummer .. ") ") or "") -- .. "[" .. Umsatz.Kategorie .. "] {" .. Umsatz.Typ .. "}"
 
 
+    -- Vorgemerkte Buchungen nicht exportieren
+
+    if ( transaction.booked == false) then
+      Exportieren = false
+    end
+
     -- Buchungen mit Betrag 0,00 nicht exportieren
 
     if ( transaction.amount == 0) then
