@@ -19,7 +19,7 @@ local reverseOrder = false
 
 -- Exportformat bei MoneyMoney anmelden
 
-Exporter{version       = 1.00,
+Exporter{version       = 1.4,
          format        = MM.localizeText("Buchungssätze"),
          fileExtension = "csv",
          reverseOrder  = reverseOrder,
@@ -256,7 +256,7 @@ function WriteTransactions (account, transactions)
 
     -- Finanzkonto für verwendetes Bankkonto ermitteln
 
-    if ( Bankkonto.Finanzkonto == "" ) then
+    if ( Bankkonto.Finanzkonto == "" or Bankkonto.Finanzkonto == nil) then
       error ( string.format("Kein Finanzkonto für Konto %s gesetzt.\n\nBitte Feld 'Finanzkonto' in den benutzerdefinierten Feldern in den Einstellungen zum Konto setzen.", account.name ), 0)
     end
 
