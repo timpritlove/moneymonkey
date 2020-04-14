@@ -8,21 +8,23 @@
 -- Das Skript liest eine zweite Lua-Datei ein, in der sich die eigentliche Konfiguration
 -- befindet. Diese muss an die eigenen Bedürfnisse und Verhältnisse angepasst werden.
 --
-
+-- Erforderliche MoneyMoney-Version: 2.3.25
 
 -- CSV Dateieinstellungen
 
 local encoding     = "UTF-8"
 local utf_bom      = false
 local linebreak    = "\n"
-local reverseOrder = false
 
 -- Exportformat bei MoneyMoney anmelden
 
-Exporter{version       = 1.4,
+Exporter{version       = 1.5,
+         options     = {
+           { label="Umsätze müssen als erledigt markiert sein", name="checkedOnly", default=true }
+         },
          format        = MM.localizeText("Buchungssätze"),
          fileExtension = "csv",
-         reverseOrder  = reverseOrder,
+         reverseOrder  = true,
          description   = MM.localizeText("Export von MoneyMoney Umsätzen zu direkt importierbaren Steuer-Buchungssätzen.")}
 
 
@@ -74,7 +76,7 @@ end
 --
 
 
-function WriteHeader (account, startDate, endDate, transactionCount)
+function WriteHeader (account, startDate, endDate, transactionCount, options)
   -- Write CSV header.
 
   local line = ""
@@ -94,7 +96,7 @@ end
 -- WriteHeader: Export abschließen
 --
 
-function WriteTail (account)
+function WriteTail (account, options)
   print ("---------------  END EXPORT  ----------------")
 end
 
@@ -146,7 +148,7 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
       end
 
       -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
-      for Nummer in string.gmatch(Metadaten, "#([%w_]+)%s*") do
+      for Nummer in string.gmatch(Metadaten, "#(%w+)%s*") do
         if AnzahlKostenstellen > 2 then
           error(string.format("Der Export wurde abgebrochen, da mehr als zwei Kostenstellen über die Kategorie angegeben wurde.\n\nKategorie:\t%s\n", Kategorie), 0)
         end
@@ -172,7 +174,7 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
   -- Umsatz-Kommentar nach Kostenstellen oder Steuersätzen durchsuchen
 
   KommentarNeu = Kommentar
-  for KS in string.gmatch(Kommentar, "#([%w_]+)%s*") do
+  for KS in string.gmatch(Kommentar, "#(%w+)%s*") do
     if AnzahlKostenstellen > 2 then
       error(string.format("Der Export wurde abgebrochen, da zu viele weitere Kostenstellen in den Notizen angegeben wurden.\n\nKategorie:\t%s\nNotiz:\t%s\nKostenstelle 1:\t%s\nKostenstelle 2:\t%s", Kategorie, Notiz, Kostenstellen[1], Kostenstellen[2]), 0)
     end
@@ -200,7 +202,7 @@ end
 --
 
 
-function WriteTransactions (account, transactions)
+function WriteTransactions (account, transactions, options)
   for _,transaction in ipairs(transactions) do
 
     -- Trage Umsatzdaten aus der Transaktion in der später zu exportierenden Form zusammen
@@ -256,7 +258,7 @@ function WriteTransactions (account, transactions)
 
     -- Finanzkonto für verwendetes Bankkonto ermitteln
 
-    if ( Bankkonto.Finanzkonto == "" or Bankkonto.Finanzkonto == nil) then
+    if ( Bankkonto.Finanzkonto == "" ) then
       error ( string.format("Kein Finanzkonto für Konto %s gesetzt.\n\nBitte Feld 'Finanzkonto' in den benutzerdefinierten Feldern in den Einstellungen zum Konto setzen.", account.name ), 0)
     end
 
@@ -313,8 +315,10 @@ function WriteTransactions (account, transactions)
     -- Buchung exportieren
 
     if Exportieren then
-      if transaction.checkmark == false then
-        error(string.format("Der Export wurde abgebrochen, da ein Umsatz nicht als erledigt markiert wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+      if options ~= nil then
+        if options.checkedOnly and transaction.checkmark == false then
+          error(string.format("Der Export wurde abgebrochen, da ein Umsatz nicht als erledigt markiert wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%.2f\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+        end
       end
 
       if Buchung.Finanzkonto and Buchung.Gegenkonto then

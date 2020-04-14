@@ -1,4 +1,4 @@
-# MoneyMonkey v1.3
+# MoneyMonkey v1.5
 
 **MoneyMonkey** ist eine Erweiterung (Plugin, Extension) für das Online-Banking-Programm _[MoneyMoney](https://moneymoney-app.com)_ (macOS). Mit **MoneyMonkey** können Umsätze von einem oder mehreren in _MoneyMoney_ geführten Konten direkt in eine Buchhaltungssoftware als vollständige Buchungssätze importiert werden und damit den Buchungsvorgang automatisieren.
 
@@ -93,7 +93,8 @@ Einnahmen Veranstaltungen Tickets [4300] #EVENT
 
 Werden einer Buchung mehr als zwei unterschiedliche Kostenstellen zugewiesen führt das zum Abbruch des Exports.
 
-_Hinweis:_ *MonKey Office* erlaubt es, Kostenstellen mit beliebigen Zeichen (einschließlich Leerzeichen) zu benennen. *MoneyMonkey* unterstützt aus Gründen der Übersichtlichkeit und als Analogie zu Hashtags nur alphanumerische Bezeichner (Groß- und Kleinbuchstaben und Ziffern, ohne Leerzeichen).
+_Hinweis:_ *MonKey Office* erlaubt es, Kostenstellen mit beliebigen Zeichen (einschließlich Leerzeichen) zu benennen. *MoneyMonkey* unterstützt aus Gründen der Übersichtlichkeit und als Analogie zu Hashtags nur alphanumerische Bezeichner (Groß- und Kleinbuchstaben und Ziffern) zzgl. des Unterstrichs ("_") aber keine Leerzeichen).
+
 
 
 #### Kostenstellen pro Umsatz einstellen
@@ -127,21 +128,32 @@ ist äquivalent zu
 
 ist aber deutlich übersichtlicher und einfacher zu verwalten.
 
+Wie schon bei einer einzelnen Buchung gilt: werden einer Buchung durch Vererbung mehr als zwei unterschiedliche Kostenstellen zugewiesen führt das zum Abbruch des Exports.
+
 
 ## MoneyMonkey starten
 
 Wenn nun in _MoneyMoney_ Umsätze ausgewählt werden, kann man im Menü `Konto` den Eintrag `Umsätze exportieren …` auswählen. In der Folge erscheint ein Dialog zur Bestimmung einer Exportdatei. In dem Auswahlmenü unten in diesem Dialog kann man nun den Punkt `Buchungssätze (.csv)` auswählen. Damit wird das Plugin für den Export ausgewählt.
 
-Wenn keine Konfigurationsfehler gefunden werden startet **MoneyMonkey** anschließend den Export in die angegebene Datei.
+Wurde das Plugin ausgewählt, erscheint darunter noch eine Option `Umsätze müssen als erledigt markiert sein`. Ist diese Option gesetzt, muss bei allen zu exportierenden Umsätzen in _MoneyMoney_ das Markierungsfeld hinter dem Umsatz ausgewählt sein. Fehlt dieses bei einem Umsatz bricht der Export mit einer entsprechenden Fehlermeldung ab. Mit dieser Option kann man sicherstellen, dass jeder Umsatz bevor er in die Buchhaltung übernommen wird eine explizite Prüfung erfahren hat (Plausibilität, korrekte Kategoriezuordnung, Beleg vorhanden etc.). Wenn man auf eine solche Prüfung verzichten möchte oder zu Testzwecken einen Export vornehmen will kann man diese Option auch ausschalten, sie ist aber empfohlen.
+
+Wenn keine Konfigurationsfehler gefunden werden startet **MoneyMonkey** anschließend den Export der ausgewählten Umsätze in die angegebene Datei.
+
+Ein Umsatz wird _nicht_ exportiert wenn eine der folgenden Bedingungen erfüllt ist
+
+* Der Umsatz wurde dem Gegenkonto [0000] zugeordnet
+* Im Bankkonto eines Umsatzes wurde eine Währung konfiguriert und der Umsatz hat eine andere Währung als die dort eingestellte
 
 Das Skript _beendet_ den Export vorzeitig wenn einer der folgenden Fehler detektiert wurde:
 
 * Ein Umsatz wurde keiner Kategorie zugeordnet
+* Für das Bankkonto eines Umsatzes wurde kein Finanzkonto konfiguriert
 * Für eine eingestellte Kategorie ist kein Gegenkonto ermittelbar
-* Der Umsatz wurde nicht bestätigt (Kästchen)
+* Der Umsatz wurde nicht bestätigt (Markierungsfeld gesetzt - nur wenn die Option gesetzt wurde, s.o.)
 * Es wurden einer Kategorie mehr als zwei Kostenstellen zugeordnet
 
 Der Fehler wird entsprechend in einem Dialog angezeigt. In jedem dieser Fälle wird keine Datei erzeugt.
+
 
 ## Import in MonKey Office
 
@@ -151,20 +163,38 @@ Wenn die Exportdatei geschrieben wurde kann sie anschließend über die Funktion
 
 Um die Datei imporieren zu können muss zunächst eine Einstellung dafür angelegt werden. Diese muss mit den folgenden Einstellungen angelegt werden:
 
-* Bereich: **Buchungen**
-* Trennzeichen für Felder: **Komma**
-* Trennzeichen für Datensätze: **LF**
-* Text in Anführungszeichen: **Doppelt "**
-* Zeichensatz für: **UTF-8**
-* Importieren ab Zeile: *2*
+* Bereich: `Buchungen`
+* Trennzeichen für Felder: `Komma`
+* Trennzeichen für Datensätze: `LF`
+* Text in Anführungszeichen: `Doppelt "`
+* Zeichensatz für: `UTF-8`
+* Importieren ab Zeile: `2`
 * Steuerautomatik: _abhängig von der Buchhaltungssystematik_
 * Einzeilig: **AUS**
 
-Über den Button _Felder zuordnen_ können die Spalten in der Exportdatei den Feldern der Buchhaltung zugeordnet werden. Die Spaltentitel der Exportdatei entsprechen dabei 1:1 den Bezeichnungen in MonKey Office und sollten daher leicht zu finden sein.
+Bevor es losgehen kann müssen noch die Felder aus der MoneyMonkey-Exportdatei den Feldern der Buchhaltung zugeordnet werden. Das kann halbautomatisch erfolgen, da die Spaltentitel der Exportdatei dabei 1:1 den Bezeichnungen in MonKey Office entsprechen. Dazu folgende Schritte vornehmen:
 
-## Import starten
+1. Über den Button _Datei_ eine MoneyMonkey-Exportdatei ausgewählen
+2. Die Einstellung _Importieren ab Zeile_ vorübergehend auf den Wert `1` setzen
+3. Den Button _Felder zuordnen_ klicken. Damit sollten alle Spalten in der Exportdatei den Feldern der Buchhaltung zugeordnet werden. Zur Sicherheit noch mal drüber schauen, ob alles geklappt hat, sonst manuell zuordnen.
+4. Die Einstellung _Importieren ab Zeile_ wieder auf den Wert `2` setzen
+
+Damit kann die Import-Einstellung verwendet werden. Neben dem Button `Datei` wird nun noch der Name der zuvor ausgewählten Datei angezeigt und darunter unter `Ordner` der Ordner, in dem sich diese Datei befand. Wenn beide Felder so belassen werden, wird beim Aktivieren der Einstellung automatisch auf genau diese Datei zugegriffen. Wenn man den Eintrag bei `Datei` löscht, erscheint beim Aktivieren des Imports automatisch ein Dateiauswahlfenster (voreingestellt auf den eingestellten Ordner). Darüber kann man sich beim Import entweder Zeit sparen oder auch sicherstellen, dass man explizit eine bestimmte Datei (oder einen bestimmten Ordner) manuell auswählen muss.
+
+
+### Import starten
 
 Wenn die Einstellungen für den Import vorgenommen wurden kann die Exportdatei importiert werden. Dabei sollte ggf. noch mal überprüft werden, ob die richtigen Spalten gewählt wurden und ob den Buchungen die richtigen Finanz- bzw. Gegenkonten, Steuersätze und Kostenstellen zugeordnet wurden.
 
 Nach dem Import sind die Buchungen sofort gültig und müssen nicht noch einmal bestätigt werden. Damit lassen sich auch große Zahlen an Umsätzen schnell in Buchungen überführen.
+
+Vorsicht: In der Importdatei angegebene Kostenstellen werden von **MonKey Office** automatisch angelegt (und sollten dann später in `Vorgaben -> Kostenstellen` noch entsprechend benannt werden).
+
+### Empfohlener Workflow
+
+Wie oft und mit welcher Granularität importiert werden soll hängt stark vom Bedarf ab. Üblicherweise sollte man mindestens monatlich die Daten von **MoneyMoney** in **MonKey Office** überführen allein schon um sicherzustellen, dass man bei der Vergabe der Kategorien und/oder Kostenstellen keine Fehler gemacht hat. Typische Fehlbuchungen lassen sich zumeist mit `Buchhaltung -> Summen und Salden` bzw. dem `Buchhaltung -> Kontoauszug` gut erkennen und entsprechende Fehler aufspüren.
+
+Der Name der jeweils gewählten Exportdatei ist in den exportierten Umsätze jeweils im Feld "BelegNr" abgelegt. Damit lassen sich Umsätze aus einem bestimmten Exportvorgang problemlos über den Buchungsfilter wiederfinden und bei Bedarf auch löschen, so dass ein Import auch wiederholt werden kann, ohne die sonstigen Buchungen zu beeinflussen.
+
+
 
