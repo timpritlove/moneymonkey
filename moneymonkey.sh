@@ -105,12 +105,7 @@ function export_from_moneymoney {
 case "${1}" in
   export)
     shift
-    export_from_moneymoney $*
-    ;;
-  *)
-    echo "Kein Kommando angegeben"
-    usage
-    exit 2
+    export_from_moneymoney "$@"
     ;;
   *)
     echo "Unbekanntes Kommando: ${1}"
