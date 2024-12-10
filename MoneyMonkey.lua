@@ -8,42 +8,43 @@
 -- Das Skript liest eine zweite Lua-Datei ein, in der sich die eigentliche Konfiguration
 -- befindet. Diese muss an die eigenen Bedürfnisse und Verhältnisse angepasst werden.
 --
--- Erforderliche MoneyMoney-Version: 2.3.25
+-- Erforderliche MoneyMoney-Version: 2.3.26
 
 -- CSV Dateieinstellungen
 
-local encoding     = "UTF-8"
-local utf_bom      = false
-local linebreak    = "\n"
+local encoding  = "UTF-8"
+local utf_bom   = false
+local linebreak = "\n"
 
 -- Exportformat bei MoneyMoney anmelden
 
-Exporter{version       = 1.5,
-         options     = {
-           { label="Umsätze müssen als erledigt markiert sein", name="checkedOnly", default=true }
-         },
-         format        = MM.localizeText("Buchungssätze"),
-         fileExtension = "csv",
-         reverseOrder  = true,
-         description   = MM.localizeText("Export von MoneyMoney Umsätzen zu direkt importierbaren Steuer-Buchungssätzen.")}
+Exporter { version = 1.6,
+  options       = {
+    { label = "Umsätze müssen als erledigt markiert sein", name = "checkedOnly",      default = true },
+    { label = "Zuordnung zu Buchungskonto erforderlich",   name = "accountMandatory", default = true }
+  },
+  format        = MM.localizeText("Buchungssätze"),
+  fileExtension = "csv",
+  reverseOrder  = true,
+  description   = MM.localizeText("Export von MoneyMoney Umsätzen zu direkt importierbaren Steuer-Buchungssätzen.") }
 
 
 -- Definition der Reihenfolge und Titel der zu exportierenden Buchungsfelder
 -- Format: Key (Internes Feld), Titel (in der ersten Zeile der CSV-Datei)
 
 Exportdatei = {
- { "Datum",          "Datum" },
- { "BelegNr",        "BelegNr" },
- { "Referenz",       "Referenz" },
- { "Betrag",         "Betrag" },
- { "Waehrung",       "Währung" },
- { "Text",           "Text" },
- { "Finanzkonto",    "KontoSoll" },
- { "Gegenkonto",     "KontoHaben" },
- { "Steuersatz",     "Steuersatz" },
- { "Kostenstelle1",  "Kostenstelle1" },
- { "Kostenstelle2",  "Kostenstelle2" },
- { "Notiz",          "Notiz" }
+  { "Datum",         "Datum" },
+  { "BelegNr",       "BelegNr" },
+  { "Referenz",      "Referenz" },
+  { "Betrag",        "Betrag" },
+  { "Waehrung",      "Währung" },
+  { "Text",          "Text" },
+  { "Finanzkonto",   "KontoSoll" },
+  { "Gegenkonto",    "KontoHaben" },
+  { "Steuersatz",    "Steuersatz" },
+  { "Kostenstelle1", "Kostenstelle1" },
+  { "Kostenstelle2", "Kostenstelle2" },
+  { "Notiz",         "Notiz" }
 }
 
 
@@ -54,7 +55,7 @@ Exportdatei = {
 
 local DELIM = "," -- Delimiter
 
-local function csvField (str)
+local function csvField(str)
   if str == nil or str == "" then
     return ""
   end
@@ -62,10 +63,10 @@ local function csvField (str)
 end
 
 
-local function concatenate (...)
+local function concatenate(...)
   local catstring = ""
-  for _, str in pairs({...}) do
-    catstring = catstring .. ( str or "")
+  for _, str in pairs({ ... }) do
+    catstring = catstring .. (str or "")
   end
   return catstring
 end
@@ -76,7 +77,7 @@ end
 --
 
 
-function WriteHeader (account, startDate, endDate, transactionCount, options)
+function WriteHeader(account, startDate, endDate, transactionCount, options)
   -- Write CSV header.
 
   local line = ""
@@ -87,26 +88,22 @@ function WriteHeader (account, startDate, endDate, transactionCount, options)
     line = line .. csvField(Eintrag[2])
   end
   assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
-  print ("--------------- START EXPORT ----------------")
-  
+  print("--------------- START EXPORT ----------------")
 end
-
 
 --
 -- WriteHeader: Export abschließen
 --
 
-function WriteTail (account, options)
-  print ("---------------  END EXPORT  ----------------")
+function WriteTail(account, options)
+  print("---------------  END EXPORT  ----------------")
 end
-
 
 function DruckeUmsatz(Grund, Umsatz)
-  print (string.format( "%s: %s / %s %s / %s / %s / %s\n",
+  print(string.format("%s: %s / %s %s / %s / %s / %s\n",
     Grund, Umsatz.Datum, Umsatz.Betrag, Umsatz.Waehrung,
-    Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz) )
+    Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz))
 end
-
 
 -- Extrahiere Metadaten aus dem Kategorie-Titel
 --
@@ -119,30 +116,29 @@ end
 -- ergänzen sich, es dürfen aber nur maximal zwei unterschiedliche Kostenstellen
 -- angegeben werden.
 
-function UmsatzMetadaten (KategoriePfad, Kommentar)
+function UmsatzMetadaten(KategoriePfad, Kommentar)
   local KategoriePfadNeu
   local Gegenkonto, Steuersatz, KS1, KS2
   local AnzahlKostenstellen = 1
   local Kostenstellen = {}
 
   for Kategorie in string.gmatch(KategoriePfad, "([^\\]+)") do
-
     -- Ist dem Titel eine Konfiguration angehängt worden?
-    local i, _, Metadaten = string.find ( Kategorie, "([%[{#].*)$")
+    local i, _, Metadaten = string.find(Kategorie, "([%[{#].*)$")
 
     -- Dann Metadaten extrahieren
     if Metadaten then
       -- Metadaten aus dem Kategorie-Titel entfernen
-      Kategorie = string.sub (Kategorie, 1, i - 1)
+      Kategorie = string.sub(Kategorie, 1, i - 1)
 
       -- Konto in eckigen Klammern ("[6851]")
-      _, _, Konto = string.find (Metadaten, "%[(%d+)%]")
+      _, _, Konto = string.find(Metadaten, "%[(%d+)%]")
       if Konto then
         Gegenkonto = Konto
       end
 
       -- Steuersatz in geschweiften Klammern ("{VSt7}")
-      _, _, Text = string.find (Metadaten, "{(.+)}")
+      _, _, Text = string.find(Metadaten, "{(.+)}")
       if Text then
         Steuersatz = Text
       end
@@ -150,7 +146,10 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
       -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
       for Nummer in string.gmatch(Metadaten, "#(%w+)%s*") do
         if AnzahlKostenstellen > 2 then
-          error(string.format("Der Export wurde abgebrochen, da mehr als zwei Kostenstellen über die Kategorie angegeben wurde.\n\nKategorie:\t%s\n", Kategorie), 0)
+          error(
+            string.format(
+              "Der Export wurde abgebrochen, da mehr als zwei Kostenstellen über die Kategorie angegeben wurde.\n\nKategorie: %s\n",
+              Kategorie), 0)
         end
         Kostenstellen[AnzahlKostenstellen] = Nummer
         AnzahlKostenstellen = AnzahlKostenstellen + 1
@@ -159,7 +158,7 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
 
 
     -- Leading/Trailing Whitespace aus dem verbliebenen Kategorie-Titel entfernen
-    _, _, Kategorie = string.find (Kategorie, "%s*(.-)%s*$")
+    _, _, Kategorie = string.find(Kategorie, "%s*(.-)%s*$")
 
 
     -- Neuen Kategoriepfad aufbauen
@@ -168,7 +167,6 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
     else
       KategoriePfadNeu = Kategorie
     end
-
   end
 
   -- Umsatz-Kommentar nach Kostenstellen oder Steuersätzen durchsuchen
@@ -176,14 +174,17 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
   KommentarNeu = Kommentar
   for KS in string.gmatch(Kommentar, "#(%w+)%s*") do
     if AnzahlKostenstellen > 2 then
-      error(string.format("Der Export wurde abgebrochen, da zu viele weitere Kostenstellen in den Notizen angegeben wurden.\n\nKategorie:\t%s\nNotiz:\t%s\nKostenstelle 1:\t%s\nKostenstelle 2:\t%s", Kategorie, Notiz, Kostenstellen[1], Kostenstellen[2]), 0)
+      error(
+        string.format(
+          "Der Export wurde abgebrochen, da zu viele weitere Kostenstellen in den Notizen angegeben wurden.\n\nKategorie: %s\nNotiz: %s\nKostenstelle 1: %s\nKostenstelle 2: %s",
+          Kategorie, Notiz, Kostenstellen[1], Kostenstellen[2]), 0)
     end
     Kostenstellen[AnzahlKostenstellen] = KS
     AnzahlKostenstellen = AnzahlKostenstellen + 1
     KommentarNeu = string.gsub(KommentarNeu, "#" .. KS .. "%s*", "")
   end
 
-  Begin, End, Text = string.find (Kommentar, "{(.+)}")
+  Begin, End, Text = string.find(Kommentar, "{(.+)}")
   if Text then
     Steuersatz = Text
     KommentarNeu = string.sub(KommentarNeu, 1, Begin) .. string.sub(KommentarNeu, End)
@@ -196,15 +197,13 @@ function UmsatzMetadaten (KategoriePfad, Kommentar)
   return KategoriePfadNeu, KommentarNeu, Gegenkonto, Steuersatz, Kostenstellen[1], Kostenstellen[2]
 end
 
-
 --
 -- WriteTransactions: Jede Buchung in eine Zeile der Exportdatei schreiben
 --
 
 
-function WriteTransactions (account, transactions, options)
-  for _,transaction in ipairs(transactions) do
-
+function WriteTransactions(account, transactions, options)
+  for _, transaction in ipairs(transactions) do
     -- Trage Umsatzdaten aus der Transaktion in der später zu exportierenden Form zusammen
 
     local Exportieren = true
@@ -216,7 +215,7 @@ function WriteTransactions (account, transactions, options)
       Typ = transaction.bookingText,
       Name = transaction.name or "",
       Kontonummer = transaction.accountNumber or "",
-      Bankcode = transaction.bankcode or "", 
+      Bankcode = transaction.bankcode or "",
       Datum = MM.localizeDate(transaction.bookingDate),
       Betrag = transaction.amount,
       Kommentar = transaction.comment or "",
@@ -258,8 +257,12 @@ function WriteTransactions (account, transactions, options)
 
     -- Finanzkonto für verwendetes Bankkonto ermitteln
 
-    if ( Bankkonto.Finanzkonto == "" ) then
-      error ( string.format("Kein Finanzkonto für Konto %s gesetzt.\n\nBitte Feld 'Finanzkonto' in den benutzerdefinierten Feldern in den Einstellungen zum Konto setzen.", account.name ), 0)
+    if (Bankkonto.Finanzkonto == "") then
+      error(
+        string.format(
+          "Kein Finanzkonto für Konto %s gesetzt.\n\n" ..
+          "Bitte Feld 'Finanzkonto' in den benutzerdefinierten Feldern in den Einstellungen zum Konto setzen.",
+          account.name), 0)
     end
 
     Buchung.Finanzkonto = Bankkonto.Finanzkonto
@@ -269,28 +272,35 @@ function WriteTransactions (account, transactions, options)
     -- Extrahiere Buchungsinformationen aus dem Kategorie-Text und Kommentar
 
     Umsatz.Kategorie, Umsatz.Kommentar, Buchung.Gegenkonto, Buchung.Steuersatz,
-    Buchung.Kostenstelle1, Buchung.Kostenstelle2 = UmsatzMetadaten (transaction.category, Umsatz.Kommentar)
+    Buchung.Kostenstelle1, Buchung.Kostenstelle2 = UmsatzMetadaten(transaction.category, Umsatz.Kommentar)
 
 
-    Buchung.Text = Umsatz.Name .. ": " .. Umsatz.Verwendungszweck .. ((Umsatz.Kommentar ~= "") and ( " (" .. Umsatz.Kommentar .. ")") or "")
-    Buchung.Notiz = ((Umsatz.Kontonummer ~= "") and ( "(" .. Umsatz.Kontonummer .. ") ") or "") -- .. "[" .. Umsatz.Kategorie .. "] {" .. Umsatz.Typ .. "}"
+    Buchung.Text = Umsatz.Name ..
+        ": " .. Umsatz.Verwendungszweck .. ((Umsatz.Kommentar ~= "") and (" (" .. Umsatz.Kommentar .. ")") or "")
+    Buchung.Notiz = ((Umsatz.Kontonummer ~= "") and ("(" .. Umsatz.Kontonummer .. ") ") or "") -- .. "[" .. Umsatz.Kategorie .. "] {" .. Umsatz.Typ .. "}"
 
 
     -- Vorgemerkte Buchungen nicht exportieren
 
-    if ( transaction.booked == false) then
+    if (transaction.booked == false) then
       Exportieren = false
     end
 
     -- Buchungen mit Betrag 0,00 nicht exportieren
 
-    if ( transaction.amount == 0) then
+    if (transaction.amount == 0) then
       Exportieren = false
     end
 
     -- Buchungen mit Gegenkonto 0000 nicht exportieren
 
-    if ( tonumber(Buchung.Gegenkonto) == 0) then
+    if (tonumber(Buchung.Gegenkonto) == 0) then
+      Exportieren = false
+    end
+
+    -- Buchungen ohne Kategorie (wenn Option gesetzt) nicht exportieren
+
+    if not options.accountMandatory and (Umsatz.Kategorie == nil) then
       Exportieren = false
     end
 
@@ -307,22 +317,33 @@ function WriteTransactions (account, transactions, options)
     if (transaction.amount > 0) then
       Buchung.Betrag = MM.localizeNumber("0.00", transaction.amount)
     else
-      Buchung.Betrag = MM.localizeNumber("0.00", - transaction.amount)
+      Buchung.Betrag = MM.localizeNumber("0.00", -transaction.amount)
       Buchung.Finanzkonto, Buchung.Gegenkonto = Buchung.Gegenkonto, Buchung.Finanzkonto
     end
-    
+
 
     -- Buchung exportieren
 
     if Exportieren then
       if options ~= nil then
         if options.checkedOnly and transaction.checkmark == false then
-          error(string.format("Der Export wurde abgebrochen, da ein Umsatz nicht als erledigt markiert wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%.2f\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+          error(
+            string.format(
+              "Der Export wurde abgebrochen, da ein Umsatz nicht als erledigt markiert wurde.\n\n" ..
+              "Betroffener Umsatz:\n" ..
+              "Konto: %s\n" ..
+              "Datum: %s\n" ..
+              "Name: %s\n" ..
+              "Betrag: %.2f %s\n" ..
+              "Kategorie: %s\n" ..
+              "Zweck: %s\n" ..
+              "Notiz: %s",
+              account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie,
+              Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
         end
       end
 
       if Buchung.Finanzkonto and Buchung.Gegenkonto then
-
         local line = ""
         for Position, Eintrag in ipairs(Exportdatei) do
           if Position ~= 1 then
@@ -332,20 +353,49 @@ function WriteTransactions (account, transactions, options)
         end
         assert(io.write(MM.toEncoding(encoding, line .. linebreak, utf_bom)))
       else
-        DruckeUmsatz ("UNVOLLSTÄNDIG", Umsatz)
+        DruckeUmsatz("UNVOLLSTÄNDIG", Umsatz)
+        local error_msg = ""
         if (Umsatz.Kategorie == nil) then
-          error(string.format("Der Export wurde abgebrochen, da einem Umsatz keine Kategorie zugewiesen wurde.\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s %s\nZweck:\t%s\nNotiz:\t%s", account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+          error_msg = string.format(
+            "Der Export wurde abgebrochen, da einem Umsatz keine Kategorie zugewiesen wurde.\n")
         else
-          error(string.format("Der Export wurde abgebrochen, da die Kontenzuordnung für die Buchhaltung unvollständig ist (Finanzkonto: %s Gegenkonto: %s).\n\nBetroffener Umsatz:\nKonto:\t%s\nDatum:\t%s\nName:\t%s\nBetrag:\t%s\t%s\nKategorie:\t%s\nZweck:\t%s\nNotiz:\t%s", Buchung.Finanzkonto, Buchung.Gegenkonto, account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie, Umsatz.Verwendungszweck, Umsatz.Notiz), 0)
+          error_msg = string.format(
+            "Der Export wurde abgebrochen, da die Kontenzuordnung für die Buchhaltung unvollständig ist.\n")
+          if Buchung.Finanzkonto == nil then
+            error_msg = error_msg ..
+                string.format(
+                  "\nFür das Konto \"%s\" muss in den Einstellungen (CMD-I) im Bereich 'Notizen' ein benutzerdefiniertes Feld mit dem Namen 'Finanzkonto' angelegt werden. Dessen Wert muss auf das dem Bankkonto zugeordnete Buchungskonto in der Buchhaltungs-Software gesetzt werden.\n\n",
+                  account.name)
+          end
+          if Buchung.Gegenkonto == nil then
+            error_msg = error_msg ..
+                string.format(
+                  "\nDem Umsatz muss eine Kategorie zugeordnet werden, die ein Buchungskonto spezifiziert werden (im Titel der Kategorie in eckigen Klammern).\n\n")
+          end
         end
+        error_msg = error_msg ..
+            string.format(
+              "\nBetroffener Umsatz:\n\n" ..
+              "Konto: %s\n" ..
+              "Datum: %s\n" ..
+              "Name: %s\n" ..
+              "Betrag: %.2f %s\n" ..
+              "Kategorie: %s\n" ..
+              "Zweck: %s\n" ..
+              "Notiz: %s\n" ..
+              "Finanzkonto: %s\n" ..
+              "Gegenkonto: %s\n",
+              account.name, Umsatz.Datum, Umsatz.Name, Umsatz.Betrag, Umsatz.Waehrung, Umsatz.Kategorie,
+              Umsatz.Verwendungszweck, Umsatz.Notiz, Buchung.Finanzkonto, Buchung.Gegenkonto)
+
+        error(error_msg, 0)
       end
     else
-        DruckeUmsatz ("ÜBERSPRUNGEN", Umsatz)
+      DruckeUmsatz("ÜBERSPRUNGEN", Umsatz)
     end
   end
 end
 
-
-function WriteTail (account)
+function WriteTail(account)
   -- Nothing to do.
 end
