@@ -20,8 +20,8 @@ local linebreak = "\n"
 
 Exporter { version = 1.6,
   options       = {
-    { label = "Umsätze müssen als erledigt markiert sein", name = "checkedOnly",      default = true },
-    { label = "Zuordnung zu Buchungskonto erforderlich",   name = "accountMandatory", default = true }
+    { label = "Umsätze müssen als erledigt markiert sein",          name = "checkedOnly",      default = true },
+    { label = "Nur Umsätze mit gültigem Buchungskonto exportieren", name = "accountMandatory", default = true }
   },
   format        = MM.localizeText("Buchungssätze"),
   fileExtension = "csv",
