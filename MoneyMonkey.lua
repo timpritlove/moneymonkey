@@ -23,7 +23,7 @@ Exporter { version = 1.6,
     { label = "Umsätze müssen als erledigt markiert sein",          name = "checkedOnly",      default = true },
     { label = "Nur Umsätze mit gültigem Buchungskonto exportieren", name = "accountMandatory", default = true }
   },
-  format        = MM.localizeText("Buchungssätze"),
+  format        = MM.localizeText("MoneyMonkey"),
   fileExtension = "csv",
   reverseOrder  = true,
   description   = MM.localizeText("Export von MoneyMoney Umsätzen zu direkt importierbaren Steuer-Buchungssätzen.") }
@@ -277,7 +277,24 @@ function WriteTransactions(account, transactions, options)
 
     Buchung.Text = Umsatz.Name ..
         ": " .. Umsatz.Verwendungszweck .. ((Umsatz.Kommentar ~= "") and (" (" .. Umsatz.Kommentar .. ")") or "")
-    Buchung.Notiz = ((Umsatz.Kontonummer ~= "") and ("(" .. Umsatz.Kontonummer .. ") ") or "") -- .. "[" .. Umsatz.Kategorie .. "] {" .. Umsatz.Typ .. "}"
+
+    -- Metadaten für Notizfeld sammeln
+    local metadata = {}
+    local metadataFields = {
+      { source = Umsatz.Typ,                    field = "Umsatzart" },
+      { source = Umsatz.Kontonummer,            field = "Konto" },
+      { source = transaction.mandateReference,  field = "Mandat" },
+      { source = transaction.creditorId,        field = "Kreditor" },
+      { source = transaction.endToEndReference, field = "E2E" }
+    }
+
+    for _, item in ipairs(metadataFields) do
+      if item.source and item.source ~= "" then
+        table.insert(metadata, item.field .. "=" .. item.source)
+      end
+    end
+
+    Buchung.Notiz = table.concat(metadata, ";")
 
 
     -- Vorgemerkte Buchungen nicht exportieren
