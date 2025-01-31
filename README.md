@@ -1,4 +1,4 @@
-# MoneyMonkey v1.5
+# MoneyMonkey v1.6
 
 **MoneyMonkey** ist eine Erweiterung (Plugin, Extension) für das Online-Banking-Programm _[MoneyMoney](https://moneymoney-app.com)_ (macOS). Mit **MoneyMonkey** können Umsätze von einem oder mehreren in _MoneyMoney_ geführten Konten direkt in eine Buchhaltungssoftware als vollständige Buchungssätze importiert werden und damit den Buchungsvorgang automatisieren.
 
@@ -133,9 +133,11 @@ Wie schon bei einer einzelnen Buchung gilt: werden einer Buchung durch Vererbung
 
 ## MoneyMonkey starten
 
-Wenn nun in _MoneyMoney_ Umsätze ausgewählt werden, kann man im Menü `Konto` den Eintrag `Umsätze exportieren …` auswählen. In der Folge erscheint ein Dialog zur Bestimmung einer Exportdatei. In dem Auswahlmenü unten in diesem Dialog kann man nun den Punkt `Buchungssätze (.csv)` auswählen. Damit wird das Plugin für den Export ausgewählt.
+Wenn nun in _MoneyMoney_ Umsätze ausgewählt werden, kann man im Menü `Konto` den Eintrag `Umsätze exportieren …` auswählen. In der Folge erscheint ein Dialog zur Bestimmung einer Exportdatei. In dem Auswahlmenü unten in diesem Dialog kann man nun den Punkt `MoneyMonkey (.csv)` auswählen. Damit wird das Plugin für den Export ausgewählt.
 
 Wurde das Plugin ausgewählt, erscheint darunter noch eine Option `Umsätze müssen als erledigt markiert sein`. Ist diese Option gesetzt, muss bei allen zu exportierenden Umsätzen in _MoneyMoney_ das Markierungsfeld hinter dem Umsatz ausgewählt sein. Fehlt dieses bei einem Umsatz bricht der Export mit einer entsprechenden Fehlermeldung ab. Mit dieser Option kann man sicherstellen, dass jeder Umsatz bevor er in die Buchhaltung übernommen wird eine explizite Prüfung erfahren hat (Plausibilität, korrekte Kategoriezuordnung, Beleg vorhanden etc.). Wenn man auf eine solche Prüfung verzichten möchte oder zu Testzwecken einen Export vornehmen will kann man diese Option auch ausschalten, sie ist aber empfohlen.
+
+Eine zweite Option heißt "Nur Umsätze mit gültigem Buchungskonto exportieren". Wenn diese Option gesetzt ist, werden nur Umsätze exportiert, die einem gültigen Buchungskonto zugeordnet sind. Diese Option ist empfohlen, da sonst auch Umsätze exportiert werden, die keinem gültigen Buchungskonto zugeordnet sind.
 
 Wenn keine Konfigurationsfehler gefunden werden startet **MoneyMonkey** anschließend den Export der ausgewählten Umsätze in die angegebene Datei.
 
@@ -154,6 +156,14 @@ Das Skript _beendet_ den Export vorzeitig wenn einer der folgenden Fehler detekt
 
 Der Fehler wird entsprechend in einem Dialog angezeigt. In jedem dieser Fälle wird keine Datei erzeugt.
 
+
+## Format der Exportdatei
+
+Die Exportdatei ist eine klassische CSV-Datei mit den Spalten "Buchungskonto", "Gegenkonto", "Betrag", "Währung", "Steuersatz", "Kostenstellen", "Notiz". Die Felder sind durch Kommas getrennt, wenn Werte Leerzeichen oder Kommas enthalten, werden diese in Anführungszeichen gesetzt. Diese Datei sollte sich mit jeder CSV-kompatiblen Software öffnen lassen.
+
+Das Feld "Text" enthält den Buchungstext, der sich aus dem Verwendungszweck und der manuellen Notiz des Umsatzes zusammensetzt (die man in MoneyMoney in den Kommentar des Umsatzes via CMD-Shift-K eintragen kann).
+
+Das Feld "Notiz" enthält weitere Metadaten, die für die Buchhaltung relevant sein die der Banktransaktion entnommen werden können. Bei SEPA-Überweisungen werden z.B. von manchen Bankendie Felder "Umsatzart", "Mandatsreferenz", "Kreditor-ID" und "End-To-End-Reference" ausgefüllt. Sind diese Felder enthalten schreibt MoneyMoney diese in einem "Feld=Wert" Format und durch Semikolon getrennt in das Feld "Notiz", so dass man diese ggf. auch noch automatisiert übernehmen kann.
 
 ## Import in MonKey Office
 
