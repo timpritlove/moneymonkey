@@ -6,7 +6,7 @@ Die für die Buchungssätze erforderliche Zuordnung von Umsätzen zu Finanz- und
 
 ## MonKey Office
 
-Dieses Exportskript wurde für eine automatisierte Datenübergabe an die Buchhaltungssoftware _[MonKey Office](http://www.monkey-office.de/products/monkeyoffice/index.html)_ entwickelt (und ist bisher nur damit getestet worden). Es sollte sich aber im Prinzip auch mit vergleichbaren Buchhaltungsprogrammen vertragen, die einen DATEV-ähnlichen Import von Buchungen ermöglichen.
+Dieses Exportskript wurde für eine automatisierte Datenübergabe an die Buchhaltungssoftware _[MonKey Office](https://www.monkey-office.de/products/monkeyoffice/)_ entwickelt (und ist bisher nur damit getestet worden). Es sollte sich aber im Prinzip auch mit vergleichbaren Buchhaltungsprogrammen vertragen, die einen DATEV-ähnlichen Import von Buchungen ermöglichen.
 
 Mit **MoneyMonkey** ist es möglich, eine Online-Banking-gestützte Buchhaltung weitgehend automatisiert zu unterhalten, erfordert aber nach wie vor Kenntnisse in der Buchhaltungssoftware, um die Ergebnisse zu prüfen und ggf. noch weitere Umbuchungen vorzunehmen.
 
