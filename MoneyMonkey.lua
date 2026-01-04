@@ -18,7 +18,7 @@ local linebreak = "\n"
 
 -- Exportformat bei MoneyMoney anmelden
 
-Exporter { version = 1.8,
+Exporter { version = 1.7,
   options       = {
     { label = "Umsätze müssen als erledigt markiert sein",          name = "checkedOnly",      default = true },
     { label = "Nur Umsätze mit gültigem Buchungskonto exportieren", name = "accountMandatory", default = true },
