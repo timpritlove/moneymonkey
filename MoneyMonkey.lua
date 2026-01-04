@@ -18,10 +18,11 @@ local linebreak = "\n"
 
 -- Exportformat bei MoneyMoney anmelden
 
-Exporter { version = 1.6,
+Exporter { version = 1.8,
   options       = {
     { label = "Umsätze müssen als erledigt markiert sein",          name = "checkedOnly",      default = true },
-    { label = "Nur Umsätze mit gültigem Buchungskonto exportieren", name = "accountMandatory", default = true }
+    { label = "Nur Umsätze mit gültigem Buchungskonto exportieren", name = "accountMandatory", default = true },
+    { label = "Nur gebuchte Umsätze exportieren",                   name = "bookedOnly",       default = true }
   },
   format        = MM.localizeText("MoneyMonkey"),
   fileExtension = "csv",
@@ -143,8 +144,8 @@ function UmsatzMetadaten(KategoriePfad, Kommentar)
         Steuersatz = Text
       end
 
-      -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000")
-      for Nummer in string.gmatch(Metadaten, "#(%w+)%s*") do
+      -- Kostenstelle 1 und 2 mit Hashzeichen ("#1000" oder "#Projekt-A")
+      for Nummer in string.gmatch(Metadaten, "#(%S+)") do
         if AnzahlKostenstellen > 2 then
           error(
             string.format(
@@ -172,7 +173,7 @@ function UmsatzMetadaten(KategoriePfad, Kommentar)
   -- Umsatz-Kommentar nach Kostenstellen oder Steuersätzen durchsuchen
 
   KommentarNeu = Kommentar
-  for KS in string.gmatch(Kommentar, "#(%w+)%s*") do
+  for KS in string.gmatch(Kommentar, "#(%S+)") do
     if AnzahlKostenstellen > 2 then
       error(
         string.format(
@@ -297,9 +298,9 @@ function WriteTransactions(account, transactions, options)
     Buchung.Notiz = table.concat(metadata, ";")
 
 
-    -- Vorgemerkte Buchungen nicht exportieren
+    -- Vorgemerkte Buchungen nicht exportieren (wenn Option aktiviert)
 
-    if (transaction.booked == false) then
+    if (transaction.booked == false) and options.bookedOnly then
       Exportieren = false
     end
 
