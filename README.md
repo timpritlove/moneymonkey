@@ -1,4 +1,4 @@
-# MoneyMonkey v1.6
+# MoneyMonkey v1.7
 
 **MoneyMonkey** ist eine Erweiterung (Plugin, Extension) für das Online-Banking-Programm _[MoneyMoney](https://moneymoney-app.com)_ (macOS). Mit **MoneyMonkey** können Umsätze von einem oder mehreren in _MoneyMoney_ geführten Konten direkt in eine Buchhaltungssoftware als vollständige Buchungssätze importiert werden und damit den Buchungsvorgang automatisieren.
 
@@ -135,9 +135,13 @@ Wie schon bei einer einzelnen Buchung gilt: werden einer Buchung durch Vererbung
 
 Wenn nun in _MoneyMoney_ Umsätze ausgewählt werden, kann man im Menü `Konto` den Eintrag `Umsätze exportieren …` auswählen. In der Folge erscheint ein Dialog zur Bestimmung einer Exportdatei. In dem Auswahlmenü unten in diesem Dialog kann man nun den Punkt `MoneyMonkey (.csv)` auswählen. Damit wird das Plugin für den Export ausgewählt.
 
-Wurde das Plugin ausgewählt, erscheint darunter noch eine Option `Umsätze müssen als erledigt markiert sein`. Ist diese Option gesetzt, muss bei allen zu exportierenden Umsätzen in _MoneyMoney_ das Markierungsfeld hinter dem Umsatz ausgewählt sein. Fehlt dieses bei einem Umsatz bricht der Export mit einer entsprechenden Fehlermeldung ab. Mit dieser Option kann man sicherstellen, dass jeder Umsatz bevor er in die Buchhaltung übernommen wird eine explizite Prüfung erfahren hat (Plausibilität, korrekte Kategoriezuordnung, Beleg vorhanden etc.). Wenn man auf eine solche Prüfung verzichten möchte oder zu Testzwecken einen Export vornehmen will kann man diese Option auch ausschalten, sie ist aber empfohlen.
+Wurde das Plugin ausgewählt, erscheint darunter noch drei Optionen, die bei Neuinstallation alle ausgewählt sind.
+
+Die erste Option heißt `Umsätze müssen als erledigt markiert sein`. Ist diese Option gesetzt, muss bei allen zu exportierenden Umsätzen in _MoneyMoney_ das Markierungsfeld hinter dem Umsatz ausgewählt sein. Fehlt dieses bei einem Umsatz bricht der Export mit einer entsprechenden Fehlermeldung ab. Mit dieser Option kann man sicherstellen, dass jeder Umsatz bevor er in die Buchhaltung übernommen wird eine explizite Prüfung erfahren hat (Plausibilität, korrekte Kategoriezuordnung, Beleg vorhanden etc.). Wenn man auf eine solche Prüfung verzichten möchte oder zu Testzwecken einen Export vornehmen will kann man diese Option auch ausschalten, sie ist aber empfohlen.
 
 Eine zweite Option heißt "Nur Umsätze mit gültigem Buchungskonto exportieren". Wenn diese Option gesetzt ist, werden nur Umsätze exportiert, die einem gültigen Buchungskonto zugeordnet sind. Diese Option ist empfohlen, da sonst auch Umsätze exportiert werden, die keinem gültigen Buchungskonto zugeordnet sind.
+
+Die dritte Option heißt "Nur gebuchte Umsätze exportieren". Wenn diese Option gesetzt ist werden nur final gebuchte Umsätze exportiert. Ist sie ausgeschaltet werden auch von der Bank nur als vorgemerkte Buchungen mit exportiert. Diese Option sollte nur im Ausnahmefall ausgeschaltet werden, da vorgemerkte Buchungen später durch die finale Buchung ersetzt werden und sich ggf. noch ändern können.
 
 Wenn keine Konfigurationsfehler gefunden werden startet **MoneyMonkey** anschließend den Export der ausgewählten Umsätze in die angegebene Datei.
 
